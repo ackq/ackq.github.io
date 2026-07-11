@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>The Mathematics of a Synthesizer</title>
+<meta name="description" content="Inside a music synthesizer there is no sound — only functions, evaluated 48,000 times per second. A visual, interactive tour of the Fourier analysis, differential equations, and numerical analysis running inside a synth built from scratch: aliasing as modular arithmetic, filters as ODEs, the Mean Value Theorem as an anti-aliasing device, and why the human ear can hear differentiability class.">
+<link rel="canonical" href="https://ackq.github.io/synth-math/">
+<meta name="theme-color" content="#0d1017">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d1017'/%3E%3Cpath d='M3 16 Q8 5 13 16 T23 16 T33 16' stroke='%236edcdc' stroke-width='2.6' fill='none'/%3E%3C/svg%3E">
+
+<!-- Open Graph (LinkedIn, Facebook, most platforms) -->
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Synth — Spandan Loop Records">
+<meta property="og:title" content="The Mathematics of a Synthesizer">
+<meta property="og:description" content="48,000 theorems per second — the Fourier analysis, ODEs, and numerical analysis inside a synth built from scratch. Interactive, audible, written for people who like their trig identities load-bearing.">
+<meta property="og:url" content="https://ackq.github.io/synth-math/">
+<meta property="og:image" content="https://ackq.github.io/synth-math/card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Mathematics of a Synthesizer — layered waveforms on a dark background">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter / X card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The Mathematics of a Synthesizer">
+<meta name="twitter:description" content="48,000 theorems per second — aliasing as modular arithmetic, filters as ODEs, the Mean Value Theorem as an anti-aliasing device, and why your ear hears differentiability class.">
+<meta name="twitter:image" content="https://ackq.github.io/synth-math/card.png">
+<meta name="twitter:image:alt" content="The Mathematics of a Synthesizer — layered waveforms on a dark background">
+
+<!-- Structured data for search engines -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "The Mathematics of a Synthesizer",
+  "description": "A visual, interactive tour of the mathematics inside a from-scratch music synthesizer: Fourier series, sampling theory, aliasing, differential-equation filters, antiderivative anti-aliasing, and the psychoacoustics of smoothness.",
+  "image": "https://ackq.github.io/synth-math/card.png",
+  "url": "https://ackq.github.io/synth-math/",
+  "author": { "@type": "Organization", "name": "Spandan Loop Records" },
+  "publisher": { "@type": "Organization", "name": "Spandan Loop Records" },
+  "datePublished": "2026-07-12",
+  "about": ["Fourier analysis", "digital signal processing", "differential equations", "numerical analysis", "music synthesis", "psychoacoustics"]
+}
+</script>
+<style>
+  :root{
+    --bg:#0d1017; --panel:#131a26; --panel2:#182236; --ink:#c9d4e3;
+    --bright:#eef4ff; --cyan:#6edcdc; --cyan-dim:#3d8a8a; --violet:#8b7cf6;
+    --amber:#e8b45a; --rose:#e87a9a; --line:#233047; --code:#9fe8e8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:17px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:rgba(110,220,220,.25)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--cyan),var(--violet));z-index:99}
+  .wrap{max-width:860px;margin:0 auto;padding:0 28px}
+  header.hero{
+    min-height:92vh;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;
+    background:radial-gradient(1200px 700px at 70% 10%, #16223a 0%, var(--bg) 60%);
+  }
+  #heroCanvas{position:absolute;inset:0;width:100%;height:100%;opacity:.5}
+  .hero-inner{position:relative;z-index:2;max-width:860px;margin:0 auto;padding:0 28px}
+  .kicker{letter-spacing:.28em;text-transform:uppercase;font-size:12px;color:var(--cyan);margin-bottom:18px}
+  h1{
+    font-family:Georgia,"Times New Roman",serif;font-weight:500;color:var(--bright);
+    font-size:clamp(38px,6vw,64px);line-height:1.12;margin-bottom:22px;
+  }
+  .dek{font-size:clamp(18px,2.2vw,22px);color:#9fb2cc;max-width:620px;line-height:1.6}
+  .byline{margin-top:34px;font-size:14px;color:#77879e}
+  .byline b{color:var(--cyan);font-weight:600}
+  .scrolldown{margin-top:48px;font-size:13px;color:#5c6b82;animation:bob 2.4s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(7px)}}
+
+  nav.toc{
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    background:rgba(19,26,38,.85);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+    padding:14px 0;position:sticky;top:0;z-index:50;overflow-x:auto;white-space:nowrap;
+  }
+  nav.toc .wrap{display:flex;gap:22px}
+  nav.toc a{color:#8496b0;text-decoration:none;font-size:13px;letter-spacing:.04em}
+  nav.toc a:hover{color:var(--cyan)}
+
+  section{padding:88px 0 30px}
+  .secnum{font-family:Georgia,serif;color:var(--cyan-dim);font-size:15px;letter-spacing:.2em;margin-bottom:8px}
+  h2{
+    font-family:Georgia,serif;font-weight:500;color:var(--bright);
+    font-size:clamp(28px,4vw,40px);line-height:1.2;margin-bottom:26px;
+  }
+  h3{font-family:Georgia,serif;font-weight:500;color:var(--bright);font-size:22px;margin:38px 0 14px}
+  p{margin:0 0 20px;max-width:760px}
+  p.lede{font-size:20px;color:#aebfd8;line-height:1.7}
+  em{color:#dce7f5}
+  a{color:var(--cyan)}
+
+  .math{
+    font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--bright);
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:18px 26px;margin:26px 0;font-size:19px;text-align:center;overflow-x:auto
+  }
+  .math .rm{font-style:normal}
+  .math sub,.math sup{font-size:.68em}
+  .mnote{display:block;font-family:-apple-system,sans-serif;font-style:normal;font-size:13px;color:#77879e;margin-top:10px}
+  .imath{font-family:Georgia,serif;font-style:italic;color:var(--bright);white-space:nowrap}
+  .imath .rm{font-style:normal}
+
+  .pull{
+    border-left:3px solid var(--violet);padding:6px 0 6px 24px;margin:34px 0;
+    font-family:Georgia,serif;font-size:23px;line-height:1.5;color:#cfd9ea;font-style:italic;max-width:680px
+  }
+  .note{
+    background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--amber);
+    border-radius:10px;padding:16px 22px;margin:26px 0;font-size:15px;color:#b8c6da
+  }
+  .note b{color:var(--amber)}
+  .war{
+    background:linear-gradient(135deg,#1a1626,#131a26);border:1px solid #33294d;
+    border-radius:12px;padding:22px 26px;margin:30px 0;font-size:15.5px
+  }
+  .war .tag{font-size:11px;letter-spacing:.22em;color:var(--rose);text-transform:uppercase;display:block;margin-bottom:10px}
+  .war b{color:#f0b7c9}
+  code{font:14px/1.5 "SF Mono",Menlo,Consolas,monospace;color:var(--code);background:#0f1622;padding:2px 7px;border-radius:5px}
+
+  figure{margin:34px 0}
+  .demo{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;
+  }
+  .demo canvas{width:100%;height:auto;display:block;border-radius:8px;background:#0a0e15}
+  .demo .controls{display:flex;flex-wrap:wrap;gap:18px;align-items:center;margin-top:16px}
+  .demo label{font-size:13px;color:#93a5bf;display:flex;align-items:center;gap:10px}
+  input[type=range]{-webkit-appearance:none;width:170px;height:4px;border-radius:2px;background:#2a3852;outline:none}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+    background:var(--cyan);cursor:pointer;box-shadow:0 0 10px rgba(110,220,220,.5)
+  }
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--cyan);cursor:pointer;border:none}
+  .btn{
+    background:#1c2940;color:var(--cyan);border:1px solid #2e415f;border-radius:8px;
+    padding:8px 16px;font-size:13px;cursor:pointer;letter-spacing:.03em
+  }
+  .btn:hover{background:#233350}
+  .btn.active{background:var(--cyan);color:#0a1220;border-color:var(--cyan)}
+  figcaption{font-size:13.5px;color:#77879e;margin-top:14px;line-height:1.6;max-width:720px}
+  figcaption b{color:#a5b7d0}
+  .val{color:var(--cyan);font-variant-numeric:tabular-nums;min-width:64px;display:inline-block}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin:30px 0}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px;font-size:15px}
+  .card h4{color:var(--cyan);font-size:15px;margin-bottom:8px;font-weight:600}
+
+  .fade{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s ease}
+  .fade.vis{opacity:1;transform:none}
+
+  .divider{display:flex;justify-content:center;margin:30px 0 0}
+  .divider svg{opacity:.5}
+
+  @media(pointer:coarse){
+    input[type=range]::-webkit-slider-thumb{width:26px;height:26px}
+    input[type=range]::-moz-range-thumb{width:26px;height:26px}
+    input[type=range]{height:6px}
+    .btn{padding:12px 18px;font-size:14px}
+  }
+  @media(max-width:640px){
+    body{font-size:16px}
+    .wrap{padding:0 18px}
+    section{padding:64px 0 20px}
+    .math{font-size:16px;padding:14px 14px}
+    .demo{padding:14px}
+    .demo .controls{gap:12px}
+    input[type=range]{width:100%;max-width:260px}
+    .pull{font-size:19px;padding-left:16px}
+    .grid2{gap:14px}
+    p.lede{font-size:18px}
+    nav.toc .wrap{gap:16px}
+  }
+  footer{padding:80px 0 90px;border-top:1px solid var(--line);margin-top:80px}
+  footer p{color:#77879e;font-size:15px}
+  .sig{font-family:Georgia,serif;font-style:italic;color:var(--cyan);font-size:18px;margin-top:16px}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<header class="hero">
+  <canvas id="heroCanvas"></canvas>
+  <div class="hero-inner">
+    <div class="kicker">Fourier · Differential Equations · Numerical Analysis · Psychoacoustics</div>
+    <h1>The Mathematics of a&nbsp;Synthesizer</h1>
+    <p class="dek">Inside a music synthesizer built from scratch, there is no sound — only functions,
+    evaluated 48,000 times per second. This is a tour of the mathematics that lives in one,
+    written for people who like their trigonometric identities load-bearing.</p>
+    <p class="byline">From the <b>AI&nbsp;Synth</b> project · Spandan Loop Records · written for a mathematician, with admiration</p>
+    <div class="scrolldown">▾ scroll</div>
+  </div>
+</header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#s1">1 · The Ear</a>
+  <a href="#s2">2 · Fourier</a>
+  <a href="#s3">3 · Sampling</a>
+  <a href="#s4">4 · Aliasing</a>
+  <a href="#s5">5 · Interpolation</a>
+  <a href="#s6">6 · Filters are ODEs</a>
+  <a href="#s7">7 · The Calculus of Clicks</a>
+  <a href="#s8">8 · Mean Value Theorem</a>
+  <a href="#s9">9 · Beats &amp; Choirs</a>
+  <a href="#s10">10 · Echoes</a>
+  <a href="#s11">11 · Uncertainty</a>
+  <a href="#s12">Coda</a>
+</div></nav>
+
+<div class="wrap">
+
+<!-- ============ 1 ============ -->
+<section id="s1" class="fade">
+  <div class="secnum">SECTION 1</div>
+  <h2>Your ear is a logarithm with opinions</h2>
+  <p class="lede">Every design decision in a synthesizer answers to a single, slightly unreasonable client:
+  the human auditory system. Before any engineering, two of its habits set the rules of the game.</p>
+
+  <p><em>First habit: the ear hears ratios, not differences.</em> The musical interval between 110&nbsp;Hz and
+  220&nbsp;Hz sounds identical to the interval between 1,760&nbsp;Hz and 3,520&nbsp;Hz — both are “one octave,”
+  a doubling. Pitch perception is logarithmic, so music divides the octave not into equal frequency
+  steps but into equal <em>ratio</em> steps. Western music uses twelve of them, which makes the frequency of
+  MIDI note <span class="imath">n</span>:</p>
+
+  <div class="math">
+    f(n) = 440 · 2<sup>(n − 69)/12</sup> <span class="rm">Hz</span>
+    <span class="mnote">Note 69 is A above middle C. Each semitone multiplies frequency by 2<sup>1/12</sup> ≈ 1.0595 — an irrational number at the heart of all tuning.</span>
+  </div>
+
+  <p>This exponential appears everywhere in the synth. When a player bends a note by <span class="imath">s</span> semitones, the
+  engine multiplies frequency by <span class="imath">2<sup>s/12</sup></span>. When two oscillators are detuned by <span class="imath">c</span> <em>cents</em>
+  (hundredths of a semitone), their ratio is <span class="imath">2<sup>c/1200</sup></span>. The filter’s cutoff knob sweeps
+  exponentially, because a linear sweep would feel like it spends ten seconds in the treble and a millisecond in the bass.</p>
+
+  <p><em>Second habit: the ear performs harmonic analysis in hardware.</em> The cochlea is a coiled, fluid-filled
+  frequency analyzer: different positions along its basilar membrane resonate at different frequencies, so what the
+  brain receives is not the pressure waveform itself but something close to its <em>spectrum</em>. Two waveforms that look
+  wildly different on an oscilloscope can sound identical if their spectra match. This means the natural domain
+  for thinking about timbre is not time — it is frequency. Which brings us directly to the patron saint of this whole project.</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="s2" class="fade">
+  <div class="secnum">SECTION 2</div>
+  <h2>Fourier, employed at 48,000 Hz</h2>
+  <p class="lede">The engine at the heart of this synth is a <em>wavetable oscillator</em>: one period of a wave, stored
+  as 2,048 numbers, read in a loop at whatever speed produces the desired pitch. Everything interesting about it is a
+  corollary of Fourier’s theorem.</p>
+
+  <p>Any reasonable periodic function decomposes into a sum of sines at integer multiples of the fundamental:</p>
+
+  <div class="math">
+    x(t) = <span class="rm">Σ</span><sub>h=1</sub><sup>∞</sup> A<sub>h</sub> sin(2π h f t + φ<sub>h</sub>)
+    <span class="mnote">The A<sub>h</sub> are the <em>harmonic amplitudes</em> — the recipe of the timbre. A sawtooth wave has A<sub>h</sub> = 1/h; a square wave has A<sub>h</sub> = 1/h for odd h only.</span>
+  </div>
+
+  <p>Play with the recipe below. Adding harmonics one at a time, you can watch a pure sine sharpen into a
+  sawtooth — the buzzy, brassy backbone of most electronic music. This is the Fourier series converging in
+  front of you, Gibbs ripples and all.</p>
+
+  <figure class="demo fade">
+    <canvas id="fourierCanvas" width="1600" height="440"></canvas>
+    <div class="controls">
+      <label>harmonics <input type="range" id="fourierN" min="1" max="60" value="1"><span class="val" id="fourierNVal">1</span></label>
+      <button class="btn" id="fourierPlay">▶ hear it</button>
+      <span style="font-size:12px;color:#5c6b82">sawtooth recipe: A<sub>h</sub> = 1/h</span>
+    </div>
+    <figcaption><b>Partial sums of the sawtooth’s Fourier series.</b> Note the overshoot that refuses to die near the
+    discontinuity as more terms arrive — the Gibbs phenomenon, about 9% forever. The audio button plays the exact
+    partial sum you see (via your browser’s audio engine), so you can hear the timbre assemble itself.</figcaption>
+  </figure>
+
+  <p>A wavetable is simply this series, pre-summed and sampled: 2,048 points of one period. But the synth doesn’t store
+  one wave — it stores a whole <em>family</em> of them, and lets the player morph continuously along the family while
+  playing. Morphing is implemented as pointwise linear interpolation between neighboring family members — a homotopy
+  between waveforms, heard as timbre in motion. The professional libraries this synth imports (from instruments
+  like Serum) are exactly such families: 256 waveforms per file, each 2,048 samples, each one frame of a timbral animation.</p>
+
+  <div class="pull">A synthesizer patch is a path through a space of periodic functions. The knobs are coordinates.</div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="s3" class="fade">
+  <div class="secnum">SECTION 3</div>
+  <h2>The theorem that makes digital audio legal</h2>
+  <p class="lede">Digital audio replaces a continuous pressure wave with a list of numbers — samples of the waveform
+  taken 48,000 times per second. That this loses <em>nothing</em> is one of the great surprises of 20th-century mathematics.</p>
+
+  <p>The Nyquist–Shannon sampling theorem: a signal containing no frequencies above <span class="imath">B</span> is
+  <em>completely determined</em> by samples taken at any rate above <span class="imath">2B</span>. Not approximated —
+  determined, exactly, via an interpolation formula built from sinc functions:</p>
+
+  <div class="math">
+    x(t) = <span class="rm">Σ</span><sub>n</sub> x[n] · sinc<span class="rm">(</span>f<sub>s</sub>t − n<span class="rm">)</span>,
+    &nbsp; sinc(u) = sin(πu)/(πu)
+    <span class="mnote">A basis expansion: the shifted sincs are orthogonal, and band-limited functions are exactly their span. Digital audio is a statement about a function space.</span>
+  </div>
+
+  <p>At the standard studio rate of 48,000 samples per second, everything below 24&nbsp;kHz — comfortably past the edge
+  of human hearing — survives the trip into numbers and back untouched. The catch is the hypothesis: <em>no frequencies
+  above B</em>. Violate it and the theorem doesn’t merely degrade politely. It retaliates.</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="s4" class="fade">
+  <div class="secnum">SECTION 4</div>
+  <h2>Aliasing, or: modular arithmetic you can hear</h2>
+  <p class="lede">Sample a frequency above the Nyquist limit and it doesn’t disappear — it comes back wearing a
+  disguise. The disguise is arithmetic modulo the sample rate.</p>
+
+  <p>A sampled sinusoid at frequency <span class="imath">f</span> is indistinguishable from one at
+  <span class="imath">f + k·f<sub>s</sub></span> for any integer <span class="imath">k</span>, because the samples land on identical values:
+  <span class="imath">sin(2π(f + k f<sub>s</sub>)(n/f<sub>s</sub>)) = sin(2π f n/f<sub>s</sub> + 2πkn)</span>. Every frequency
+  therefore gets projected — <em>folded</em> — into the band below Nyquist, reflecting off the boundary like a billiard ball:</p>
+
+  <figure class="demo fade">
+    <canvas id="aliasCanvas" width="1600" height="420"></canvas>
+    <div class="controls">
+      <label>true frequency <input type="range" id="aliasF" min="1000" max="46000" value="6000" step="100"><span class="val" id="aliasFVal">6.0 kHz</span></label>
+      <button class="btn" id="aliasPlay">▶ hear the fold</button>
+    </div>
+    <figcaption><b>Top: the folding map.</b> True frequency in, perceived frequency out — a triangle wave, the
+    reflection of arithmetic mod <span class="imath">f<sub>s</sub></span> off the Nyquist mirror at 24 kHz.
+    <b>Bottom: the waveform.</b> Grey is the true oscillation; cyan dots are the samples; the cyan curve is what those
+    samples actually describe. Past Nyquist, the samples trace a slower, entirely fictitious wave. The audio button
+    sweeps the true frequency upward — listen for the moment the pitch starts falling instead.</figcaption>
+  </figure>
+
+  <p>Why does a wavetable synth care? Because a sawtooth’s recipe is <span class="imath">A<sub>h</sub> = 1/h</span> — harmonics
+  forever. Play a stored sawtooth at a high pitch and its upper harmonics sail past Nyquist and fold back as inharmonic
+  garbage: frequencies unrelated to the note, heard as a metallic sourness that no equalizer can remove. Naïve digital
+  oscillators sound cheap for precisely this reason.</p>
+
+  <h3>The fix: eleven pre-filtered copies</h3>
+  <p>This synth’s solution is <em>mip-mapping</em>, borrowed in spirit from computer graphics. For each waveform, it
+  precomputes a ladder of eleven band-limited versions: the full wave with 1,024 harmonics, then 512, then 256… down to a
+  bare sine. The construction is pure Fourier surgery, done once at load time:</p>
+
+  <div class="math">
+    <span class="rm">FFT</span> → <span class="rm">zero every bin</span> h &gt; H<sub>max</sub> → <span class="rm">inverse FFT</span>
+    <span class="mnote">Truncating the Fourier series is the ideal low-pass filter — a projection onto the subspace of waves that cannot alias at the target pitch.</span>
+  </div>
+
+  <p>At play time, the engine computes how many harmonics fit under Nyquist for the current pitch
+  (<span class="imath">H = ⌊f<sub>s</sub> / 2f⌋</span>) and reads from the rung of the ladder that fits — actually from a
+  smooth blend of two adjacent rungs, so that a gliding pitch never audibly “switches.” The blend must lean on the
+  <em>safer</em> rung: mixing in any table whose harmonics exceed Nyquist, even at 10% amplitude, reintroduces the crime.</p>
+
+  <div class="war">
+    <span class="tag">war story · caught by a theorem with a unit test</span>
+    The project keeps an automated <b>spectral regression harness</b>: render the oscillator, take a 32,768-point FFT,
+    and assert that everything which is not a harmonic of the fundamental sits below −100&nbsp;dB — one part in 100,000.
+    When the crossfade was first written, it blended from the mathematically wrong rung of the ladder. No human ear
+    flagged it in testing; the FFT did, instantly, reporting alias energy at −54&nbsp;dB. The fix changed one index.
+    The harness also contains a test that <b>verifies the test</b>: it renders a deliberately aliasing naïve sawtooth
+    and asserts the harness <em>fails</em> it — a falsifiability check, because a detector that never fires is
+    indistinguishable from a broken one.
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="s5" class="fade">
+  <div class="secnum">SECTION 5</div>
+  <h2>Reading between the samples</h2>
+  <p class="lede">A table holds 2,048 points, but a playing note needs the wave’s value at position 1371.640625.
+  Interpolation — and the choice of interpolant is audible.</p>
+
+  <p>Nearest-neighbor lookup produces staircase error rich in high-frequency images. Linear interpolation — connecting
+  the dots — is better, but its error spectrum still leaks audible ghost frequencies; in graphics you’d see it as
+  jaggies, in audio you hear it as a faint fizz. This synth reads through a
+  <em>Catmull-Rom spline</em>: the cubic through four neighboring points whose slope at each sample is the centered
+  difference of its neighbors,</p>
+
+  <div class="math">
+    x(t) ≈ <span class="rm">(</span>(a·t + b)·t + c<span class="rm">)</span>·t + p<sub>0</sub>
+    <span class="mnote">with a = ½(3(p₀−p₁) − p₋₁ + p₂), b = p₁ + p₁ + p₋₁ − ½(5p₀ + p₂), c = ½(p₁ − p₋₁) — a C¹ piecewise cubic, evaluated in Horner form: four multiplies per sample.</span>
+  </div>
+
+  <p>The payoff is in the error orders: linear interpolation’s error is <span class="imath">O(h²)</span>, the cubic’s is
+  <span class="imath">O(h⁴)</span> with smooth first derivatives — and its spectral images fall below the −100 dB alias
+  floor the project enforces elsewhere. Numerical analysis, in service of not annoying the ear.</p>
+
+  <figure class="demo fade">
+    <canvas id="interpCanvas" width="1600" height="380"></canvas>
+    <div class="controls">
+      <button class="btn active" data-mode="0" id="ibtn0">nearest</button>
+      <button class="btn" data-mode="1" id="ibtn1">linear</button>
+      <button class="btn" data-mode="2" id="ibtn2">Catmull-Rom</button>
+    </div>
+    <figcaption><b>Three interpolants through the same eleven samples</b> (dots) of a smooth wave (grey).
+    Nearest is a step function; linear is C⁰ with visible corners; the cubic hugs the truth with continuous slope.
+    The corners are not just ugly — Section 7 shows that corners, as a class, are audible.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="s6" class="fade">
+  <div class="secnum">SECTION 6</div>
+  <h2>The filter is a differential equation with a resonance knob</h2>
+  <p class="lede">The most beloved control on any synthesizer — the filter cutoff — is a knob on a second-order ODE.
+  Sweep it and you are continuously re-parameterizing a damped harmonic oscillator while it runs.</p>
+
+  <p>Analog synth filters were literal circuits: capacitors integrating currents. The canonical <em>state-variable
+  filter</em> is, in continuous time, exactly the mass-spring-damper equation with the input as forcing:</p>
+
+  <div class="math">
+    ÿ + 2ζω<sub>c</sub> ẏ + ω<sub>c</sub><sup>2</sup> y = ω<sub>c</sub><sup>2</sup> x(t)
+    <span class="mnote">ω<sub>c</sub> = cutoff frequency, ζ = damping. Low damping ⇒ the system rings near ω<sub>c</sub> — that ringing is <em>resonance</em>, the “wet, whistling” quality of a squelchy synth bass. The resonance knob is literally 1/ζ.</span>
+  </div>
+
+  <p>One equation, three outputs for free: <span class="imath">y</span> is the low-pass, <span class="imath">ÿ</span>-side
+  gives the high-pass, and <span class="imath">ẏ</span> the band-pass — which is why the synth offers all three modes
+  from a single structure.</p>
+
+  <h3>Digitizing without lying</h3>
+  <p>To run this on samples, the integrators become sums — this synth uses the trapezoidal rule, which in the signal
+  world goes by <em>bilinear transform</em>. It has a beautiful geometric character: it is the Möbius map
+  <span class="imath">s = 2f<sub>s</sub>(z−1)/(z+1)</span>, which carries the entire imaginary axis of the analog
+  frequency plane onto the unit circle of the digital one. Stability is preserved exactly (left half-plane → inside the
+  disc), but frequency gets nonlinearly compressed near Nyquist. The distortion is known in closed form, so you cancel
+  it in advance — <em>pre-warping</em>:</p>
+
+  <div class="math">
+    g = tan<span class="rm">(</span>π f<sub>c</sub> / f<sub>s</sub><span class="rm">)</span>
+    <span class="mnote">Feed the digital filter this warped coefficient and its cutoff lands at exactly f<sub>c</sub>. The tangent — the Möbius map’s fingerprint — sits in the hot loop of the synth, recomputed 1,500 times per second per voice while you turn the knob.</span>
+  </div>
+
+  <p>One more subtlety separates a textbook digital filter from a musical one. The trapezoidal integrator makes the
+  filter’s feedback <em>instantaneous</em> — output depends on this very sample’s input. Naïve implementations insert a
+  one-sample delay in the loop and drift out of tune at high cutoffs; the correct approach (called “zero-delay feedback”
+  in the trade) solves the implicit equation algebraically, the same move as an implicit ODE solver. This synth’s filter
+  is exact in that sense, which is why its resonance stays stable and in tune even while being violently modulated —
+  there is a unit test that whips the cutoff across four octaves at audio rate and asserts the state stays bounded.</p>
+
+  <figure class="demo fade">
+    <canvas id="filterCanvas" width="1600" height="430"></canvas>
+    <div class="controls">
+      <label>cutoff <input type="range" id="filtF" min="0" max="1" step="0.001" value="0.5"><span class="val" id="filtFVal">1.0 kHz</span></label>
+      <label>resonance <input type="range" id="filtQ" min="0" max="0.98" step="0.01" value="0.3"><span class="val" id="filtQVal">0.30</span></label>
+      <button class="btn" data-fm="0" id="fbtn0">low-pass</button>
+      <button class="btn" data-fm="1" id="fbtn1">band-pass</button>
+      <button class="btn" data-fm="2" id="fbtn2">high-pass</button>
+    </div>
+    <figcaption><b>The exact magnitude response |H(e<sup>jω</sup>)| of the synth’s filter</b>, computed from the same
+    equations the engine runs, on a log-frequency axis (the ear’s axis). Raise the resonance and watch the pole pair
+    slide toward the unit circle — the peak at cutoff is the ODE ringing. The engine caps resonance at 0.98: the
+    remaining 0.02 is the margin between “sounds alive” and “is an oscillator now.”</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="s7" class="fade">
+  <div class="secnum">SECTION 7</div>
+  <h2>The calculus of clicks</h2>
+  <p class="lede">Here is the most surprising thing this project taught its author: the human ear can hear
+  differentiability class. Not metaphorically — operationally, reproducibly, at levels far below what a waveform
+  plot reveals.</p>
+
+  <p>Every note is shaped by an <em>envelope</em>: a function that fades the sound in at key-press and out at release.
+  This synth’s envelopes are exponential approaches — the solution of <span class="imath">ẏ = (target − y)/τ</span>,
+  computed as the recurrence <span class="imath">y[n+1] = y[n] + k(target − y[n])</span> — one multiply-add per sample,
+  the discrete shadow of an RC circuit.</p>
+
+  <p>Exponentials are lovely, but an ADSR envelope is <em>piecewise</em> exponential, and at each junction the derivative
+  jumps. During development, listeners reported a faint tick at chord changes — yet the recorded waveform, zoomed to the
+  sample level, showed no jump at all. The signal was continuous. Its slope was continuous. The bug was hiding one
+  derivative deeper, and the instrument that found it was a bank of finite differences:</p>
+
+  <div class="grid2">
+    <div class="card"><h4>Δ¹ — a value step</h4>C⁻¹ failure. A hard click, plainly visible in the waveform. Example: cutting a voice without a fade. Energy spectrum falls as 1/f — loud, broadband.</div>
+    <div class="card"><h4>Δ² — a slope kink</h4>C⁰ but not C¹. A softer click, hard to see. Example caught here: switching a channel between two filters whose internal states remembered different histories.</div>
+    <div class="card"><h4>Δ³ — a curvature jump</h4>C¹ but not C². A feeble tick, <em>invisible</em> in any waveform plot. Example: 24 envelope attack-corners igniting on the same sample. Spectrum falls as 1/f³ — quiet, but the ear flagged it.</div>
+    <div class="card"><h4>The measurement</h4>Steady-state third difference of the signal: 0.00008. In the ten milliseconds after a chord change: 0.002 — a 25× spike, precisely event-locked. The listener was right; the oscilloscope was blind.</div>
+  </div>
+
+  <p>The repair is a classic from analysis: convolve the envelope with a smoothing kernel — a mollifier, in practice a
+  0.5-millisecond one-pole — which rounds every corner and lifts the output from C⁰ to effectively C<sup>∞</sup>
+  at the junctions. Applied to the <em>control signal</em> only, never the audio: at steady state the smoother is the
+  identity, so timbre is untouched by construction.</p>
+
+  <figure class="demo fade">
+    <canvas id="envCanvas" width="1600" height="430"></canvas>
+    <div class="controls">
+      <button class="btn active" id="envRaw">raw ADSR</button>
+      <button class="btn" id="envSmooth">mollified</button>
+      <span style="font-size:12px;color:#5c6b82">bottom trace: second difference (click detector), amplified</span>
+    </div>
+    <figcaption><b>An ADSR envelope and its second difference.</b> The raw envelope looks perfectly smooth to the eye,
+    but its difference trace spikes at every stage junction — those spikes are what a quiet room and a good ear
+    receive. The mollified version’s difference trace is flat. The ear as a functional: it evaluates something
+    close to ∫|x‴|² and objects when it is large.</figcaption>
+  </figure>
+
+  <div class="war">
+    <span class="tag">war story · the ear beat the instruments, twice</span>
+    The click-hunting metric itself had to be debugged. The first regression test passed <em>with the bug present</em> —
+    its test choreography kept the two filter states identical, so there was no divergent state to expose. The second
+    version also passed wrongly: it toggled faster than the detuned oscillators could decorrelate. The final protocol:
+    let the system genuinely diverge (half a second of wide detune), make <b>one</b> transition, measure the third
+    difference — and then <b>re-introduce the bug deliberately to confirm the test fails</b>. A test you haven’t watched
+    fail is a conjecture, not a theorem.
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section id="s8" class="fade">
+  <div class="secnum">SECTION 8</div>
+  <h2>Distortion, rescued by the Mean Value Theorem</h2>
+  <p class="lede">To make a sound “growl,” synths deliberately push it through a nonlinearity. The one used here is
+  <span class="imath">tanh</span> — a smooth soft-clipper. Nonlinearity manufactures new harmonics; new harmonics can
+  exceed Nyquist; Section 4’s villain returns. The escape is one of the prettiest tricks in modern audio DSP,
+  and it is essentially the Mean Value Theorem run in reverse.</p>
+
+  <p>The problem: applying <span class="imath">tanh</span> sample-by-sample is applying it to the <em>sampled</em> signal,
+  and the distortion products fold. The insight (Parker et&nbsp;al., 2016 — “antiderivative anti-aliasing”): instead of
+  evaluating the nonlinearity <em>at</em> each sample, output its <em>average over the inter-sample interval</em>.
+  For that, you don’t need the signal between samples — the fundamental theorem of calculus hands it to you from the
+  antiderivative alone:</p>
+
+  <div class="math">
+    y[n] = <span class="rm">1</span>/(x[n] − x[n−1]) · ∫<sub>x[n−1]</sub><sup>x[n]</sup> tanh(u) du
+         = ( F(x[n]) − F(x[n−1]) ) / ( x[n] − x[n−1] )
+    <span class="mnote">with F(u) = ln cosh u. Averaging is a convolution with a box kernel — a low-pass applied in the continuous domain, <em>before</em> sampling can fold anything. Cost: one extra state variable.</span>
+  </div>
+
+  <p>When consecutive samples nearly coincide, the divided difference degenerates to 0/0 — and its limit, by the very
+  definition of the derivative, is <span class="imath">F′ = tanh</span> at the midpoint. The code contains that limit
+  as a branch. L’Hôpital, shipped to production.</p>
+
+  <h3>A numerical-analysis ambush</h3>
+  <p>The first implementation used 32-bit floats and developed a strange rasp at heavy drive — <em>noise injected by the
+  anti-noise stage</em>. The diagnosis is textbook catastrophic cancellation: at a drive of +36&nbsp;dB the inputs reach
+  |x| ≈ 150, where <span class="imath">F(x) ≈ 149.3</span> and a 32-bit float’s spacing (ULP) is 1.5×10⁻⁵. Subtracting two
+  such values for a small <span class="imath">Δx</span> leaves almost pure rounding error, then the division amplifies
+  it — up to 30% per sample. The same computation in 64-bit floats errs at one part in 10⁸. Two lines changed;
+  a whole class of error extinguished.</p>
+
+  <figure class="demo fade">
+    <canvas id="tanhCanvas" width="1600" height="430"></canvas>
+    <div class="controls">
+      <label>drive <input type="range" id="driveG" min="0" max="36" step="0.5" value="12"><span class="val" id="driveGVal">12 dB</span></label>
+      <button class="btn" id="drivePlay">▶ hear it</button>
+    </div>
+    <figcaption><b>Left: the transfer curve</b> y = tanh(g·x) steepening with drive — a sine entering, a rounded square
+    emerging. <b>Right: the output’s harmonic spectrum</b>, computed live by a small DFT. tanh is odd, so only odd
+    harmonics appear — symmetry classes of the nonlinearity are audible as a timbre family (even harmonics would
+    require breaking the odd symmetry).</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 9 ============ -->
+<section id="s9" class="fade">
+  <div class="secnum">SECTION 9</div>
+  <h2>A choir of one, and the trigonometry of width</h2>
+  <p class="lede">The “supersaw” — the huge sound under most modern dance leads — is one note played by up to eight
+  copies of the oscillator, each mistuned by a few cents. Everything you hear in it is interference.</p>
+
+  <p>Two sines detuned by <span class="imath">δ</span> obey the sum-to-product identity:</p>
+
+  <div class="math">
+    sin(2πf t) + sin(2π(f+δ)t) = 2 cos(πδt) · sin(2π(f + δ/2)t)
+    <span class="mnote">A carrier at the average frequency, amplitude-modulated at the difference frequency — <em>beats</em>. With eight copies at eight detunes, the beat pattern never exactly repeats: motion without an LFO in sight.</span>
+  </div>
+
+  <figure class="demo fade">
+    <canvas id="beatCanvas" width="1600" height="360"></canvas>
+    <div class="controls">
+      <label>detune <input type="range" id="beatD" min="0" max="60" step="1" value="18"><span class="val" id="beatDVal">18 cents</span></label>
+      <button class="btn" id="beatPlay">▶ hear the beating</button>
+    </div>
+    <figcaption><b>Seven detuned copies, summed.</b> The envelope’s slow undulation is the pairwise beat structure —
+    the sound’s “shimmer.” Detune wider and the beating accelerates from slow breathing to thick chorus.</figcaption>
+  </figure>
+
+  <h3>Energy bookkeeping on the unit circle</h3>
+  <p>Spreading the copies across the stereo field uses <em>constant-power panning</em>: each copy’s left/right gains are
+  <span class="imath">(cos θ, sin θ)</span> for a pan angle θ — so <span class="imath">g<sub>L</sub>² + g<sub>R</sub>² = 1</span>
+  identically, and loudness (which tracks power, not amplitude) is invariant as a copy sweeps across the image. The
+  Pythagorean identity, employed as a conservation law.</p>
+
+  <p>Summing <span class="imath">N</span> copies raises a normalization question with a probabilistic answer. The copies
+  start at random phases, so they add like independent random variables: amplitudes don’t sum —
+  <em>variances</em> do, and the ensemble’s RMS grows as <span class="imath">√N</span>. The engine therefore divides by
+  <span class="imath">√(Σ aₖ²)</span>, keeping perceived loudness constant whether the choir has one voice or eight.
+  (A subtle bug lived here once: with an even number of copies, the “center” weight was handed to one off-center copy,
+  tilting the stereo image 2.5&nbsp;dB leftward and biasing the ensemble’s mean pitch flat. Symmetry restored it:
+  even choirs now split the center weight between the two middle voices.)</p>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="s10" class="fade">
+  <div class="secnum">SECTION 10</div>
+  <h2>The architecture of echoes</h2>
+  <p class="lede">Reverberation — the sound of a room — is a linear operator with an enormous, decaying impulse response.
+  Simulating it honestly would convolve every sample with a few seconds of response. The classic alternative, running
+  in this synth, builds a room from feedback loops and a small miracle of complex analysis.</p>
+
+  <p>The atom is the <em>feedback comb filter</em>: a delay line of <span class="imath">D</span> samples feeding back with
+  gain <span class="imath">g</span>. One impulse in, a geometric series out — echoes at spacing <span class="imath">D</span>,
+  amplitudes <span class="imath">g, g², g³…</span> Exponential decay for free; the “room size” knob simply sets
+  <span class="imath">g</span>. Its frequency response, though, is a picket fence — resonances at every multiple of
+  <span class="imath">f<sub>s</sub>/D</span> — so one comb sounds like singing into a pipe. The design (Schroeder, 1962;
+  refined as “Freeverb”) runs <em>eight combs in parallel</em> with carefully chosen, near-coprime delay lengths
+  (1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617 samples), so their resonance fences almost never align — the sum’s
+  response is dense and roomlike. Number theory, deployed against flutter echo.</p>
+
+  <p>Then the miracle: the parallel combs feed four <em>allpass filters</em> in series,</p>
+
+  <div class="math">
+    H(z) = ( z<sup>−D</sup> + g ) / ( 1 + g·z<sup>−D</sup> ), &nbsp; |H(e<sup>jω</sup>)| = 1 &nbsp;<span class="rm">for all</span> ω
+    <span class="mnote">Poles and zeros in reciprocal-conjugate pairs: the magnitude response is <em>exactly flat</em> — it changes no tone color at all — while the phase response scrambles arrival times, multiplying echo density.</span>
+  </div>
+
+  <p>An operator that is audibly “transparent” in the frequency domain yet dramatically active in the time domain —
+  students meet allpass filters and assume they do nothing. Rooms are built out of them.</p>
+
+  <figure class="demo fade">
+    <canvas id="combCanvas" width="1600" height="380"></canvas>
+    <div class="controls">
+      <label>feedback g <input type="range" id="combG" min="0.5" max="0.97" step="0.01" value="0.84"><span class="val" id="combGVal">0.84</span></label>
+      <button class="btn" id="combOne">one comb</button>
+      <button class="btn active" id="combAll">8 combs + allpasses</button>
+    </div>
+    <figcaption><b>Impulse responses.</b> One comb: a bare geometric series — metallic, periodic. The full Schroeder
+    network: echo density growing until individual reflections fuse into the statistical wash the ear reads as
+    “a room.” Decay time follows RT₆₀ ≈ 3·ln(10)·D / (f<sub>s</sub>·ln(1/g)) — solve the geometric series for −60 dB.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 11 ============ -->
+<section id="s11" class="fade">
+  <div class="secnum">SECTION 11</div>
+  <h2>Watching the spectrum, and paying the uncertainty tax</h2>
+  <p class="lede">The synth’s display shows a live spectrum — a Fourier transform of the last thousand samples,
+  recomputed dozens of times per second. Doing this honestly means negotiating with an uncertainty principle.</p>
+
+  <p>The discrete Fourier transform of a finite window is really the transform of the signal <em>times</em> the window —
+  and by the convolution theorem, the spectrum you see is the true spectrum smeared by the window’s own transform. A
+  rectangular window has vicious sidelobes (−13&nbsp;dB): energy from one loud partial “leaks” across the whole display.
+  The synth uses a Hann window, <span class="imath">w[n] = ½(1 − cos 2πn/N)</span>, trading a slightly wider main lobe
+  for sidelobes at −31&nbsp;dB and falling fast.</p>
+
+  <p>Underneath sits the real constraint, formally identical to Heisenberg’s:</p>
+
+  <div class="math">
+    Δt · Δf ≥ 1/4π
+    <span class="mnote">A window Δt seconds long cannot resolve frequencies finer than ~1/Δt apart. Sharper pitch reading demands a longer look; a longer look blurs time. The analyzer, the ear, and quantum mechanics all pay the same tax — it is a theorem about Fourier pairs, not about physics.</span>
+  </div>
+
+  <p>The same discipline shapes the project’s test suite: test tones are chosen to land <em>exactly on FFT bins</em>
+  (frequencies of the form <span class="imath">k·f<sub>s</sub>/N</span>), so harmonics occupy single bins and any energy
+  elsewhere is provably artifact. Measurement theory first; assertions second. The whole quality story of this synth —
+  the −100&nbsp;dB alias floors, the click taxonomy, the cancellation hunt — rests on knowing what the measuring
+  instrument itself distorts.</p>
+</section>
+
+<!-- ============ 12 ============ -->
+<section id="s12" class="fade">
+  <div class="secnum">CODA</div>
+  <h2>48,000 theorems per second</h2>
+  <p class="lede">Zoom out, and one note on this synthesizer is a stack of mathematics executing in real time.</p>
+
+  <p>Press a key: an exponential map turns note number into frequency. Eleven Fourier projections stand ready so the
+  harmonic series never crosses Nyquist. A C¹ cubic reads between samples. A trapezoidally-integrated second-order ODE
+  colors the tone, its cutoff pre-warped through a Möbius map’s tangent. The Mean Value Theorem averages a hyperbolic
+  tangent so distortion can’t fold. Mollified exponentials shape the loudness so no derivative jumps loudly enough to
+  hear. Sum-to-product identities shimmer the choir; the Pythagorean identity conserves its power; √N normalizes its
+  loudness. Near-coprime geometric series build the room, and flat-magnitude Möbius atoms densify it. All of it,
+  per sample, forty-eight thousand times a second, with a hard real-time deadline and no permission to allocate
+  memory or throw an error — because a single missed deadline is itself a Δ¹ discontinuity, and Section 7 explains
+  exactly how that sounds.</p>
+
+  <p>The part that might please a mathematician most: almost every bug worth telling a story about was found not by
+  reading code but by <em>measurement against theory</em> — an FFT that knew where harmonics must lie, a finite
+  difference that knew what smoothness requires, a floating-point model that knew where subtraction goes to die.
+  The theory did not decorate the engineering. It was the debugger.</p>
+
+  <div class="pull">Music is the pleasure the human mind experiences from counting without being aware that it is
+  counting.<br><span style="font-size:15px;font-style:normal;color:#77879e">— Leibniz, who would have adored a spectral regression harness</span></div>
+</section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <p>Written as a companion to the <b>AI Synth</b> project — a from-scratch wavetable synthesizer, built in Rust,
+    whose entire audio engine is portable mathematics: no operating system calls, no hardware assumptions, just
+    functions of time evaluated very, very quickly.</p>
+    <p class="sig">For Dad — who taught the counting first. ♪</p>
+  </div>
+</footer>
+
+<script>
+"use strict";
+/* ---------- utilities ---------- */
+const $ = id => document.getElementById(id);
+const TAU = Math.PI * 2;
+function ctx2d(id){ const c = $(id); const x = c.getContext("2d"); return [c, x]; }
+function grid(x, w, h, step=40){
+  x.strokeStyle = "#16202f"; x.lineWidth = 1; x.beginPath();
+  for(let gx=0; gx<=w; gx+=step){ x.moveTo(gx,0); x.lineTo(gx,h); }
+  for(let gy=0; gy<=h; gy+=step){ x.moveTo(0,gy); x.lineTo(w,gy); }
+  x.stroke();
+}
+function trace(x, pts, color, width=2.5, alpha=1){
+  x.globalAlpha = alpha; x.strokeStyle = color; x.lineWidth = width;
+  x.lineJoin = "round"; x.beginPath();
+  pts.forEach((p,i)=> i ? x.lineTo(p[0],p[1]) : x.moveTo(p[0],p[1]));
+  x.stroke(); x.globalAlpha = 1;
+}
+/* one shared AudioContext, created on first gesture */
+let AC = null;
+function audio(){ if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)(); return AC; }
+function playBuffer(fill, seconds=2.0, gain=0.16){
+  const ac = audio(), sr = ac.sampleRate, n = Math.floor(seconds*sr);
+  const buf = ac.createBuffer(1, n, sr); const d = buf.getChannelData(0);
+  fill(d, sr);
+  /* 10 ms fade in/out — this article practices what Section 7 preaches */
+  const f = Math.floor(sr*0.01);
+  for(let i=0;i<f;i++){ d[i]*=i/f; d[n-1-i]*=i/f; }
+  const src = ac.createBufferSource(); src.buffer = buf;
+  const g = ac.createGain(); g.gain.value = gain;
+  src.connect(g).connect(ac.destination); src.start();
+  return src;
+}
+
+/* ---------- hero: drifting additive wave ---------- */
+(function(){
+  const [c,x] = ctx2d("heroCanvas");
+  function size(){ c.width = c.clientWidth*2; c.height = c.clientHeight*2; }
+  size(); addEventListener("resize", size);
+  let t = 0;
+  (function frame(){
+    t += 0.008;
+    const w = c.width, h = c.height;
+    x.clearRect(0,0,w,h);
+    for(let layer=0; layer<3; layer++){
+      const pts = [];
+      for(let px=0; px<=w; px+=6){
+        const u = px/w * TAU*2;
+        let s = 0;
+        for(let k=1;k<=5;k++) s += Math.sin(u*k + t*(1+layer*0.4) + layer*2)/k;
+        pts.push([px, h*0.5 + s*h*0.09*(1-layer*0.22)]);
+      }
+      trace(x, pts, layer? "#2b4a63" : "#3d8a8a", 2, 0.7-layer*0.2);
+    }
+    requestAnimationFrame(frame);
+  })();
+})();
+
+/* ---------- D1: Fourier builder ---------- */
+(function(){
+  const [c,x] = ctx2d("fourierCanvas");
+  const slider = $("fourierN"), val = $("fourierNVal");
+  function saw(u, N){ let s=0; for(let h=1;h<=N;h++) s += Math.sin(u*h)/h; return s*(2/Math.PI); }
+  function draw(){
+    const N = +slider.value; val.textContent = N;
+    const w=c.width, h=c.height;
+    x.clearRect(0,0,w,h); grid(x,w,h,50);
+    /* ideal saw, ghost */
+    const ideal=[];
+    for(let px=0;px<=w;px+=4){ const u=(px/w)*2*TAU; const m=((u/TAU)%1); ideal.push([px, h*0.5 - (2*m-1)*h*0.33*-1]); }
+    trace(x, ideal, "#334760", 1.6);
+    const pts=[];
+    for(let px=0;px<=w;px+=3){ const u=(px/w)*2*TAU; pts.push([px, h*0.5 - saw(u,N)*h*0.33]); }
+    trace(x, pts, "#6edcdc", 3);
+  }
+  slider.addEventListener("input", draw); draw();
+  $("fourierPlay").addEventListener("click", ()=>{
+    const N=+slider.value, f=196; /* G3 */
+    playBuffer((d,sr)=>{ for(let i=0;i<d.length;i++){ const u=TAU*f*i/sr; let s=0;
+      for(let h=1;h<=N;h++) s+=Math.sin(u*h)/h; d[i]=s*0.5; }});
+  });
+})();
+
+/* ---------- D2: aliasing ---------- */
+(function(){
+  const [c,x] = ctx2d("aliasCanvas");
+  const slider=$("aliasF"), val=$("aliasFVal"), FS=48000, NY=FS/2;
+  function folded(f){ const m=((f % FS)+FS)%FS; return m>NY ? FS-m : m; }
+  function draw(){
+    const f=+slider.value; val.textContent=(f/1000).toFixed(1)+" kHz";
+    const w=c.width,h=c.height; x.clearRect(0,0,w,h);
+    /* top: folding map */
+    const mapH=h*0.42; grid(x,w,mapH,50);
+    const map=[]; for(let px=0;px<=w;px+=3){ const ff=px/w*FS; map.push([px, mapH-8-(folded(ff)/NY)*(mapH-24)]); }
+    trace(x,map,"#8b7cf6",2.5);
+    x.fillStyle="#8496b0"; x.font="30px Georgia"; x.fillText("perceived frequency vs true frequency", 20, 38);
+    x.strokeStyle="#e8b45a"; x.setLineDash([6,6]); x.beginPath();
+    x.moveTo(w*NY/FS,0); x.lineTo(w*NY/FS,mapH); x.stroke(); x.setLineDash([]);
+    x.fillStyle="#e8b45a"; x.font="28px Georgia"; x.fillText("Nyquist 24 kHz", w*NY/FS+12, mapH-16);
+    const px = w*f/FS, py = mapH-8-(folded(f)/NY)*(mapH-24);
+    x.fillStyle="#6edcdc"; x.beginPath(); x.arc(px,py,9,0,TAU); x.fill();
+    /* bottom: sampled wave */
+    const y0=h*0.48, wh=h-y0;
+    x.save(); x.translate(0,y0); grid(x,w,wh,50);
+    const showF = f/4000; /* scaled into view: cycles across canvas */
+    const truePts=[]; for(let q=0;q<=w;q+=2) truePts.push([q, wh/2 - Math.sin(TAU*showF*q/w*4)*wh*0.36]);
+    trace(x,truePts,"#334760",1.6);
+    const aliasF = folded(f)/4000;
+    const aliasPts=[]; for(let q=0;q<=w;q+=2){
+      const ph = TAU*4*q/w; const sTrue=Math.sin(ph*showF);
+      aliasPts.push([q, wh/2 - Math.sin(ph*aliasF + ((f%FS)>NY? Math.PI:0))*wh*0.36]);
+    }
+    trace(x,aliasPts,"#6edcdc",2.5);
+    /* sample dots at fs/4000 rate scaled */
+    x.fillStyle="#6edcdc";
+    for(let k=0;k<48;k++){ const q=k/48*w; const ph=TAU*4*q/w;
+      const s=Math.sin(ph*showF); x.beginPath(); x.arc(q, wh/2 - s*wh*0.36, 5, 0, TAU); x.fill(); }
+    x.restore();
+  }
+  slider.addEventListener("input",draw); draw();
+  $("aliasPlay").addEventListener("click", ()=>{
+    playBuffer((d,sr)=>{ /* naive sweep 2k → 40k at the AC rate: folds audibly */
+      let ph=0;
+      for(let i=0;i<d.length;i++){ const f0=2000+38000*(i/d.length); ph+=TAU*f0/sr; d[i]=Math.sin(ph)*0.6; }
+    }, 3.0);
+  });
+})();
+
+/* ---------- D3: interpolation ---------- */
+(function(){
+  const [c,x]=ctx2d("interpCanvas");
+  let mode=2;
+  const N=11, samp=[];
+  for(let i=0;i<N;i++){ const u=i/(N-1)*TAU*1.5; samp.push(Math.sin(u)+0.35*Math.sin(3*u+1.2)); }
+  function truth(u){ return Math.sin(u)+0.35*Math.sin(3*u+1.2); }
+  function catmull(p0,p1,p2,p3,t){
+    const a=0.5*(3*(p1-p2)-p0+p3), b=p2+p2+p0-(5*p1+p3)*0.5, cc=0.5*(p2-p0);
+    return ((a*t+b)*t+cc)*t+p1;
+  }
+  function draw(){
+    const w=c.width,h=c.height; x.clearRect(0,0,w,h); grid(x,w,h,50);
+    const X=i=>60+(w-120)*i/(N-1), Y=v=>h/2 - v*h*0.3;
+    const tp=[]; for(let q=0;q<=200;q++){ const u=q/200*TAU*1.5; tp.push([60+(w-120)*q/200, Y(truth(u))]); }
+    trace(x,tp,"#334760",1.6);
+    const ip=[];
+    for(let q=0;q<=600;q++){
+      const pos=q/600*(N-1), i=Math.min(Math.floor(pos),N-2), t=pos-i;
+      let v;
+      if(mode===0) v=samp[Math.round(pos)];
+      else if(mode===1) v=samp[i]*(1-t)+samp[i+1]*t;
+      else { const p0=samp[Math.max(i-1,0)],p3=samp[Math.min(i+2,N-1)]; v=catmull(p0,samp[i],samp[i+1],p3,t); }
+      ip.push([60+(w-120)*pos/(N-1), Y(v)]);
+    }
+    trace(x,ip,"#6edcdc",3);
+    x.fillStyle="#8b7cf6";
+    for(let i=0;i<N;i++){ x.beginPath(); x.arc(X(i),Y(samp[i]),7,0,TAU); x.fill(); }
+  }
+  [0,1,2].forEach(m=>{
+    $("ibtn"+m).addEventListener("click",()=>{ mode=m;
+      [0,1,2].forEach(k=>$("ibtn"+k).classList.toggle("active",k===m)); draw(); });
+  });
+  draw();
+})();
+
+/* ---------- D4: filter response ---------- */
+(function(){
+  const [c,x]=ctx2d("filterCanvas");
+  const fS=$("filtF"), qS=$("filtQ"), fV=$("filtFVal"), qV=$("filtQVal");
+  let fmode=0; const FS=48000;
+  function resp(fc,res,mode,f){
+    const g=Math.tan(Math.PI*fc/FS), k=2-2*res;
+    /* TPT SVF transfer evaluated on the unit circle */
+    const w0=TAU*f/FS, z={re:Math.cos(w0),im:Math.sin(w0)};
+    /* H_lp(z) = g^2(1+z^-1)^2 / D,  D=(1+z^-1)^2 g^2 + g k (1-z^-2) + (1-z^-1)^2 */
+    const inv={re:z.re,im:-z.im};
+    const one_p={re:1+inv.re,im:inv.im}, one_m={re:1-inv.re,im:-inv.im};
+    const sq=(a)=>({re:a.re*a.re-a.im*a.im, im:2*a.re*a.im});
+    const mul=(a,b)=>({re:a.re*b.re-a.im*b.im, im:a.re*b.im+a.im*b.re});
+    const p2=sq(one_p), m2=sq(one_m), pm=mul(one_p,one_m);
+    const D={re:g*g*p2.re + g*k*pm.re + m2.re, im:g*g*p2.im + g*k*pm.im + m2.im};
+    let Nn;
+    if(mode===0) Nn={re:g*g*p2.re, im:g*g*p2.im};
+    else if(mode===1) Nn={re:g*pm.re, im:g*pm.im};
+    else Nn=m2;
+    const mag=Math.hypot(Nn.re,Nn.im)/Math.hypot(D.re,D.im);
+    return mag;
+  }
+  function draw(){
+    const fc = 20*Math.pow(1000, +fS.value); /* 20..20k log */
+    const res=+qS.value;
+    fV.textContent = fc>=1000 ? (fc/1000).toFixed(1)+" kHz" : fc.toFixed(0)+" Hz";
+    qV.textContent = res.toFixed(2);
+    const w=c.width,h=c.height; x.clearRect(0,0,w,h); grid(x,w,h,50);
+    /* dB grid labels */
+    x.fillStyle="#5c6b82"; x.font="24px Georgia";
+    [-36,-24,-12,0,12].forEach(db=>{
+      const y=h*0.78 - db/54*h*0.62; x.fillText(db+" dB", 14, y-4);
+      x.strokeStyle="#1b2636"; x.beginPath(); x.moveTo(70,y); x.lineTo(w,y); x.stroke();
+    });
+    const pts=[];
+    for(let q=0;q<=520;q++){
+      const f=20*Math.pow(1000,q/520);
+      const m=resp(fc,res,fmode,f);
+      const db=Math.max(-40, 20*Math.log10(m+1e-9));
+      pts.push([70+(w-90)*q/520, h*0.78 - db/54*h*0.62]);
+    }
+    trace(x,pts,"#6edcdc",3);
+    const fx=70+(w-90)*(Math.log(fc/20)/Math.log(1000));
+    x.strokeStyle="#e8b45a"; x.setLineDash([6,6]); x.beginPath(); x.moveTo(fx,20); x.lineTo(fx,h-10); x.stroke(); x.setLineDash([]);
+  }
+  fS.addEventListener("input",draw); qS.addEventListener("input",draw);
+  [0,1,2].forEach(m=>$("fbtn"+m).addEventListener("click",()=>{ fmode=m;
+    [0,1,2].forEach(k=>$("fbtn"+k).classList.toggle("active",k===m)); draw(); }));
+  $("fbtn0").classList.add("active");
+  draw();
+})();
+
+/* ---------- D5: envelope + d2 ---------- */
+(function(){
+  const [c,x]=ctx2d("envCanvas");
+  let smooth=false;
+  function draw(){
+    const w=c.width,h=c.height; x.clearRect(0,0,w,h); grid(x,w,h,50);
+    const N=900, A=90,D=160,S=0.62,R=260, rel=560;
+    const env=new Float32Array(N); let v=0, sm=0;
+    const kA=1-Math.exp(-1/(A/4)), kD=1-Math.exp(-1/(D/3)), kR=1-Math.exp(-1/(R/3));
+    const kS=1-Math.exp(-1/12); /* the mollifier */
+    for(let i=0;i<N;i++){
+      let target,kk;
+      if(i<A*2.2){ target=1.3; kk=kA; if(v>1){v=1;} }
+      else if(i<rel){ target=S; kk=kD; }
+      else { target=0; kk=kR; }
+      v=v+kk*(target-v); if(i<A*2.2&&v>1)v=1;
+      sm=sm+kS*(v-sm);
+      env[i]= smooth? sm : v;
+    }
+    const Y=vv=>h*0.52 - vv*h*0.42;
+    const pts=[]; for(let i=0;i<N;i++) pts.push([40+(w-80)*i/N, Y(env[i])]);
+    trace(x,pts,"#6edcdc",3);
+    /* second difference, amplified */
+    const d2=[]; for(let i=2;i<N;i++){ const d=env[i]-2*env[i-1]+env[i-2]; d2.push([40+(w-80)*i/N, h*0.85 - d*4000]); }
+    trace(x,d2,"#e87a9a",2);
+    x.fillStyle="#8496b0"; x.font="28px Georgia";
+    x.fillText("envelope", 46, Y(1)-16);
+    x.fillStyle="#e87a9a"; x.fillText("Δ² × 4000  (what the ear flags)", 46, h*0.85-16);
+  }
+  $("envRaw").addEventListener("click",()=>{smooth=false;$("envRaw").classList.add("active");$("envSmooth").classList.remove("active");draw();});
+  $("envSmooth").addEventListener("click",()=>{smooth=true;$("envSmooth").classList.add("active");$("envRaw").classList.remove("active");draw();});
+  draw();
+})();
+
+/* ---------- D6: tanh + spectrum ---------- */
+(function(){
+  const [c,x]=ctx2d("tanhCanvas");
+  const gS=$("driveG"), gV=$("driveGVal");
+  function draw(){
+    const db=+gS.value; gV.textContent=db+" dB";
+    const g=Math.pow(10,db/20);
+    const w=c.width,h=c.height; x.clearRect(0,0,w,h);
+    const half=w*0.46;
+    grid(x,half,h,44);
+    /* transfer curve + shaped sine */
+    const tc=[]; for(let q=0;q<=200;q++){ const u=-1.4+2.8*q/200; tc.push([half*0.5+u*half*0.32, h*0.5-Math.tanh(g*u)*h*0.34]); }
+    trace(x,tc,"#8b7cf6",2.5);
+    const N=512, out=new Float32Array(N);
+    for(let i=0;i<N;i++) out[i]=Math.tanh(g*Math.sin(TAU*i/N*2))/Math.tanh(Math.max(g,1e-6));
+    const wave=[]; for(let i=0;i<N;i++) wave.push([ (i/N)*half, h*0.5-out[i]*h*0.3]);
+    trace(x,wave,"#6edcdc",3,0.9);
+    /* spectrum via small DFT */
+    x.save(); x.translate(w*0.5,0);
+    const sw=w*0.5; grid(x,sw,h,44);
+    x.fillStyle="#8496b0"; x.font="28px Georgia"; x.fillText("harmonic spectrum (dB)", 18, 38);
+    for(let hbin=1;hbin<=15;hbin++){
+      let re=0,im=0;
+      for(let i=0;i<N;i++){ const ph=TAU*hbin*2*i/N; re+=out[i]*Math.cos(ph); im+=out[i]*Math.sin(ph); }
+      const mag=2*Math.hypot(re,im)/N;
+      const dbv=Math.max(-60,20*Math.log10(mag+1e-9));
+      const bh=(dbv+60)/60*(h-70);
+      x.fillStyle = hbin%2? "#6edcdc" : "#2a3852";
+      x.fillRect(30+(hbin-1)*(sw-60)/15, h-20-bh, (sw-60)/15*0.6, bh);
+      x.fillStyle="#5c6b82"; x.font="22px Georgia"; x.fillText(hbin, 30+(hbin-1)*(sw-60)/15+6, h-6);
+    }
+    x.restore();
+  }
+  gS.addEventListener("input",draw); draw();
+  $("drivePlay").addEventListener("click",()=>{
+    const g=Math.pow(10,(+gS.value)/20);
+    playBuffer((d,sr)=>{ for(let i=0;i<d.length;i++){ d[i]=Math.tanh(g*Math.sin(TAU*98*i/sr))/Math.tanh(Math.max(g,1)); } },1.8);
+  });
+})();
+
+/* ---------- D7: beating ---------- */
+(function(){
+  const [c,x]=ctx2d("beatCanvas");
+  const dS=$("beatD"), dV=$("beatDVal");
+  function draw(){
+    const cents=+dS.value; dV.textContent=cents+" cents";
+    const w=c.width,h=c.height; x.clearRect(0,0,w,h); grid(x,w,h,50);
+    const f0=55, copies=7, T=0.9; /* seconds shown */
+    const pts=[];
+    for(let q=0;q<=w;q+=2){
+      const t=q/w*T; let s=0;
+      for(let k=0;k<copies;k++){
+        const off=copies>1? 2*k/(copies-1)-1 : 0;
+        const f=f0*Math.pow(2, off*cents/1200);
+        s+=Math.sin(TAU*f*t + k*1.7)/copies;
+      }
+      pts.push([q, h/2 - s*h*0.4]);
+    }
+    trace(x,pts,"#6edcdc",1.8);
+  }
+  dS.addEventListener("input",draw); draw();
+  $("beatPlay").addEventListener("click",()=>{
+    const cents=+dS.value;
+    playBuffer((d,sr)=>{
+      for(let i=0;i<d.length;i++){ const t=i/sr; let s=0;
+        for(let k=0;k<7;k++){ const off=2*k/6-1; const f=110*Math.pow(2,off*cents/1200);
+          s+=Math.sin(TAU*f*t+k*1.7)/7; }
+        d[i]=s; } },3.0,0.22);
+  });
+})();
+
+/* ---------- D8: comb / reverb impulse ---------- */
+(function(){
+  const [c,x]=ctx2d("combCanvas");
+  const gS=$("combG"), gV=$("combGVal");
+  let full=true;
+  const TUN=[1116,1188,1277,1356,1422,1491,1557,1617];
+  function draw(){
+    const g=+gS.value; gV.textContent=g.toFixed(2);
+    const w=c.width,h=c.height; x.clearRect(0,0,w,h); grid(x,w,h,50);
+    const N=26000, out=new Float32Array(N);
+    if(!full){
+      const D=1300; for(let e=0;e*D<N;e++) out[e*D]=Math.pow(g,e);
+    } else {
+      for(const D of TUN){ for(let e=0;e*D<N;e++) out[e*D]+=Math.pow(g,e)/8; }
+      /* crude allpass densification for display */
+      const ap=[556,441];
+      for(const D of ap){
+        for(let i=D;i<N;i++){ const v=out[i-D]; out[i]+=0.5*v; out[i-D]*=-0.35; }
+      }
+    }
+    x.strokeStyle="#6edcdc"; x.lineWidth=1.5; x.globalAlpha=0.9;
+    x.beginPath();
+    for(let i=0;i<N;i+=8){
+      const px=30+(w-60)*i/N, mag=Math.abs(out[i]);
+      const ph=h-30-Math.min(mag,1)*(h-70);
+      x.moveTo(px,h-30); x.lineTo(px,ph);
+    }
+    x.stroke(); x.globalAlpha=1;
+    x.fillStyle="#8496b0"; x.font="28px Georgia";
+    x.fillText(full? "8 near-coprime combs + allpass diffusion":"a single comb: periodic, metallic", 30, 40);
+  }
+  gS.addEventListener("input",draw);
+  $("combOne").addEventListener("click",()=>{full=false;$("combOne").classList.add("active");$("combAll").classList.remove("active");draw();});
+  $("combAll").addEventListener("click",()=>{full=true;$("combAll").classList.add("active");$("combOne").classList.remove("active");draw();});
+  draw();
+})();
+
+/* ---------- scroll niceties ---------- */
+const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) e.target.classList.add("vis"); }),{threshold:0.12});
+document.querySelectorAll(".fade").forEach(el=>io.observe(el));
+addEventListener("scroll",()=>{
+  const d=document.documentElement;
+  $("progress").style.width=(d.scrollTop/(d.scrollHeight-d.clientHeight)*100)+"%";
+});
+</script>
+</body>
+</html>
