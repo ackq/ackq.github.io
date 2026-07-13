@@ -15,6 +15,7 @@
     --cyan:#6edcdc;--cyan-dim:#3d8a8a;--violet:#8b7cf6;--amber:#e8b45a;--rose:#e87a9a;--line:#233047;
   }
   *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
   [hidden]{display:none!important}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
   body{background:var(--bg);color:var(--ink);
@@ -73,8 +74,27 @@
     font-family:"Noto Sans Devanagari","Nirmala UI","Mangal","Kohinoor Devanagari",sans-serif;
     font-size:19px;line-height:2}
 
+  .linklike{background:none;border:none;color:var(--cyan);cursor:pointer;font:inherit;padding:0;text-align:left}
+  .linklike:hover{color:var(--bright);text-decoration:underline}
+  dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:16px;
+    padding:22px;width:min(880px,94vw)}
+  dialog::backdrop{background:rgba(5,8,14,.82)}
+  dialog h2{font-family:Georgia,serif;font-weight:500;color:var(--bright);font-size:22px;margin-bottom:12px}
+  dialog video{width:100%;height:auto;border-radius:10px;background:#000;display:block}
+
   footer{padding:40px 0 70px;color:#77879e;font-size:14.5px}
-  @media(max-width:600px){.wrap{padding:0 16px}.panel{padding:20px 16px}}
+  @media(max-width:600px){
+    .wrap{padding:0 16px}
+    header{padding:34px 0 20px}
+    .panel{padding:20px 16px}
+    .dropzone{padding:32px 14px;font-size:17px}
+    .btn-row{flex-direction:column;align-items:stretch}
+    .btn{width:100%;text-align:center}
+    [role=tablist]{gap:6px}
+    [role=tab]{flex:1;text-align:center;padding:11px 8px}
+    textarea{min-height:300px;font-size:18px;padding:14px}
+    dialog{padding:14px;width:96vw}
+  }
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -94,7 +114,7 @@
         <li>तैयार पाठ पर स्क्रीन-रीडर अपने-आप पहुँच जाएगा — वहाँ से कॉपी या डाउनलोड करें।</li>
       </ol>
     </div>
-    <p style="margin-top:14px"><a href="./demo-hindi.mp4"><span aria-hidden="true">▶ </span>डेमो वीडियो सुनें — यह कैसे काम करता है (हिंदी में, पौने तीन मिनट) / Hear the demo — how it works</a></p>
+    <p style="margin-top:14px"><button type="button" class="linklike" id="demoBtn"><span aria-hidden="true">▶ </span>डेमो वीडियो सुनें — यह कैसे काम करता है (हिंदी में, पौने तीन मिनट) / Hear the demo — how it works</button></p>
   </div>
 </header>
 
@@ -158,6 +178,17 @@
   </section>
 
 </main>
+
+<dialog id="demoDialog" aria-labelledby="demoTitle">
+  <h2 id="demoTitle">डेमो वीडियो / Demo video</h2>
+  <video id="demoVideo" controls playsinline preload="metadata">
+    <source src="./demo-hindi.mp4" type="video/mp4">
+    <track kind="captions" src="./demo-hindi.vtt" srclang="hi" label="हिंदी" default>
+  </video>
+  <div class="btn-row">
+    <button type="button" class="btn primary" id="demoClose">बंद करें / Close</button>
+  </div>
+</dialog>
 
 <footer>
   <div class="wrap">
@@ -781,6 +812,18 @@ function saveSession() {
 addEventListener("beforeunload", (e) => {
   if (S.busy) { e.preventDefault(); e.returnValue = ""; }
 });
+
+/* ================= demo video dialog ================= */
+const demoBtn = $("demoBtn"), demoDialog = $("demoDialog"),
+      demoVideo = $("demoVideo"), demoClose = $("demoClose");
+demoBtn.addEventListener("click", () => {
+  if (typeof demoDialog.showModal !== "function") { location.href = "./demo-hindi.mp4"; return; }
+  demoDialog.showModal();
+  demoVideo.play().catch(() => {}); // opened by a tap, so autoplay with sound is allowed
+});
+demoClose.addEventListener("click", () => demoDialog.close());
+demoDialog.addEventListener("click", (e) => { if (e.target === demoDialog) demoDialog.close(); });
+demoDialog.addEventListener("close", () => { demoVideo.pause(); demoBtn.focus(); });
 
 /* ================= init ================= */
 if (S.pw) els.pwPanel.hidden = true;
