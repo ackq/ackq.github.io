@@ -137,7 +137,12 @@ async function handleReview(req, env) {
     body: JSON.stringify({
       model: REVIEW_MODEL,
       temperature: 0.2,
-      max_tokens: Math.min(8192, text.length * 2),
+      // sarvam-105b is a reasoning model: it spends tokens thinking before
+      // answering, so the cap must cover reasoning + the full corrected text.
+      // 4096 is the max on the starter tier; the client keeps batches small
+      // (~2500 chars) so both always fit.
+      max_tokens: 4096,
+      reasoning_effort: "low",
       messages: [
         { role: "system", content: REVIEW_PROMPT },
         { role: "user", content: text },
@@ -149,7 +154,9 @@ async function handleReview(req, env) {
 
   const data = await upstream.json();
   const corrected = data?.choices?.[0]?.message?.content;
-  if (!corrected) return json({ error: "empty_completion" }, 502);
+  if (!corrected) {
+    return json({ error: "empty_completion", detail: data?.choices?.[0]?.finish_reason || "" }, 502);
+  }
   return json({ corrected: corrected.trim() });
 }
 

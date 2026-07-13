@@ -167,7 +167,7 @@ const SEARCH_S = 5;        // trailing window to hunt for silence near a cut
 const CONCURRENCY = 2;
 const RETRIES = 3;
 const MAX_FILE_MB = 600;
-const REVIEW_BATCH_CHARS = 3500;
+const REVIEW_BATCH_CHARS = 2500; // keeps reasoning + corrected text inside the 4096-token cap
 const PW_KEY = "shrutlekh_pw";
 
 /* ================= state ================= */
@@ -305,7 +305,9 @@ async function runReview() {
   if (!S.raw.trim()) return;
   setStatus("भाषा-सुधार जारी… / Correcting the text…");
   try {
-    S.corrected = await reviewAll(S.raw);
+    const result = await reviewAll(S.raw);
+    if (!result.trim()) throw { fatal: "empty_review" };
+    S.corrected = result;
     els.txtCorrected.value = S.corrected;
     saveSession();
   } catch (e) {
@@ -322,6 +324,8 @@ function finish() {
   if (failed > 0) {
     els.retryBtn.hidden = false;
     setStatus(`पूरा हुआ, लेकिन ${failed} भाग विफल रहे — नीचे “फिर से भेजें” दबाएँ / Done, but ${failed} part(s) failed — use the retry button.`, { error: true });
+  } else if (S.raw.trim() && !S.corrected.trim()) {
+    setStatus("लिपि तैयार है, पर भाषा-सुधार नहीं हो पाया — “फिर से सुधारें” दबाएँ। / Transcript ready, but correction failed — press “Re-run correction”.", { error: true });
   } else {
     setStatus("हो गया! सुधारा हुआ पाठ नीचे तैयार है। / Done! The corrected text is ready below.");
   }
