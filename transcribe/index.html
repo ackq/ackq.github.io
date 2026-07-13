@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,6 +16,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   [hidden]{display:none!important}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
   body{background:var(--bg);color:var(--ink);
     font:18px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased}
@@ -85,11 +86,21 @@
     <h1>श्रुतलेख</h1>
     <p class="tagline">कैसेट की रिकॉर्डिंग से साफ़ हिंदी पाठ — ऑडियो फ़ाइल चुनें, बाक़ी यह पन्ना कर देगा।<br>
     From cassette recording to clean Hindi text — pick the audio file, this page does the rest.</p>
-    <p style="margin-top:14px"><a href="./demo-hindi.mp4">▶ डेमो वीडियो सुनें — यह कैसे काम करता है (हिंदी में, पौने तीन मिनट) / Hear the demo — how it works</a></p>
+    <div class="sr-only">
+      <h2>तीन आसान क़दम</h2>
+      <ol>
+        <li>परिवार का पासवर्ड एक बार लिखें और सहेजें।</li>
+        <li>ऑडियो फ़ाइल चुनें — काम अपने-आप शुरू होगा और प्रगति बोल कर बतायी जाएगी।</li>
+        <li>तैयार पाठ पर स्क्रीन-रीडर अपने-आप पहुँच जाएगा — वहाँ से कॉपी या डाउनलोड करें।</li>
+      </ol>
+    </div>
+    <p style="margin-top:14px"><a href="./demo-hindi.mp4"><span aria-hidden="true">▶ </span>डेमो वीडियो सुनें — यह कैसे काम करता है (हिंदी में, पौने तीन मिनट) / Hear the demo — how it works</a></p>
   </div>
 </header>
 
 <main class="wrap">
+
+  <div class="sr-only" aria-live="assertive" id="announce"></div>
 
   <section class="panel" id="pwPanel">
     <h2>पासवर्ड / Password</h2>
@@ -99,7 +110,7 @@
       <div class="btn-row">
         <button class="btn primary" type="submit">सहेजें / Save</button>
       </div>
-      <p class="hint" id="pwMsg"></p>
+      <p class="hint" id="pwMsg" role="alert"></p>
     </form>
   </section>
 
@@ -196,6 +207,7 @@ const els = {
   paneCorrected: $("paneCorrected"), paneRaw: $("paneRaw"),
   txtCorrected: $("txtCorrected"), txtRaw: $("txtRaw"),
   copyBtn: $("copyBtn"), downloadBtn: $("downloadBtn"), rereviewBtn: $("rereviewBtn"),
+  announce: $("announce"),
   outMsg: $("outMsg"),
 };
 
@@ -258,8 +270,13 @@ els.dropzone.addEventListener("drop", (e) => {
 });
 
 /* ================= main flow ================= */
+function announce(msg) {
+  els.announce.textContent = "";
+  setTimeout(() => { els.announce.textContent = msg; }, 50);
+}
+
 async function run(file) {
-  if (S.busy) return;
+  if (S.busy) { announce("अभी काम चल रहा है — कृपया प्रतीक्षा करें / A job is already running — please wait."); return; }
   if (WORKER_URL.indexOf("PASTE_") === 0) {
     setupError("Setup incomplete: WORKER_URL is not configured in this page yet.");
     return;
@@ -285,7 +302,7 @@ async function run(file) {
     const mins = S.samples.length / SR / 60;
     els.fileInfo.textContent = `${file.name} — ${mins.toFixed(1)} मिनट / minutes`;
 
-    setStatus("ऑडियो के भाग बनाए जा रहे हैं… / Splitting audio…");
+    setStatus(`रिकॉर्डिंग ${mins.toFixed(1)} मिनट की है। भाग बनाए जा रहे हैं… / Recording is ${mins.toFixed(1)} minutes long. Splitting…`);
     await yieldUI();
     S.segs = findBoundaries(S.samples);
     S.results = new Array(S.segs.length);
@@ -443,7 +460,8 @@ async function decodeWavDirect(file) {
     }
     carry = mono[framesThis - 1];
     blockStart += framesThis;
-    setStatus(`ऑडियो पढ़ी जा रही है… / Reading audio… ${Math.round(blockStart / nFrames * 100)}%`);
+    // visual-only progress; the live region announced this stage once already
+    els.statusDetail.textContent = `पढ़ना ${Math.round(blockStart / nFrames * 100)}% / reading ${Math.round(blockStart / nFrames * 100)}%`;
     setBar(blockStart / nFrames * 0.1); // decoding is the first 10% of the bar
     await yieldUI();
   }
