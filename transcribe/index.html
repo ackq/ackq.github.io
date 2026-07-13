@@ -209,7 +209,7 @@
 <dialog id="demoDialog" aria-labelledby="demoTitle">
   <h2 id="demoTitle">डेमो वीडियो / Demo video</h2>
   <video id="demoVideo" controls playsinline preload="metadata">
-    <source src="./demo-hindi.mp4" type="video/mp4">
+    <source src="./demo-hindi.mp4?v=2" type="video/mp4">
     <track kind="captions" src="./demo-hindi.vtt" srclang="hi" label="हिंदी">
   </video>
   <div class="btn-row">
@@ -844,7 +844,7 @@ addEventListener("beforeunload", (e) => {
 const demoBtn = $("demoBtn"), demoDialog = $("demoDialog"),
       demoVideo = $("demoVideo"), demoClose = $("demoClose");
 demoBtn.addEventListener("click", () => {
-  if (typeof demoDialog.showModal !== "function") { location.href = "./demo-hindi.mp4"; return; }
+  if (typeof demoDialog.showModal !== "function") { location.href = "./demo-hindi.mp4?v=2"; return; }
   demoDialog.showModal();
   demoVideo.play().catch(() => {}); // opened by a tap, so autoplay with sound is allowed
 });
