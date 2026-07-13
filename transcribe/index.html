@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<title>श्रुतलेख — Hindi speech to Devanagari text</title>
+<meta name="description" content="Upload a digitized cassette recording and get clean Hindi Devanagari text back — transcribed by Sarvam AI, proofread by an LLM, ready to copy or download.">
+<meta name="theme-color" content="#0d1017">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d1017'/%3E%3Cpath d='M3 16 Q8 5 13 16 T23 16 T33 16' stroke='%236edcdc' stroke-width='2.6' fill='none'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0d1017;--panel:#131a26;--panel2:#182236;--ink:#c9d4e3;--bright:#eef4ff;
+    --cyan:#6edcdc;--cyan-dim:#3d8a8a;--violet:#8b7cf6;--amber:#e8b45a;--rose:#e87a9a;--line:#233047;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);
+    font:18px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  ::selection{background:rgba(110,220,220,.25)}
+  .wrap{max-width:860px;margin:0 auto;padding:0 24px}
+  a{color:var(--cyan);text-decoration:none}
+  a:hover{color:var(--bright)}
+  :focus-visible{outline:3px solid var(--cyan);outline-offset:2px;border-radius:4px}
+
+  header{padding:56px 0 30px}
+  .eyebrow{letter-spacing:.24em;text-transform:uppercase;font-size:12.5px;color:var(--cyan);margin-bottom:14px}
+  h1{font-family:Georgia,"Times New Roman",serif;font-weight:500;color:var(--bright);
+    font-size:clamp(34px,5.4vw,52px);line-height:1.12;margin-bottom:12px}
+  .tagline{color:#9fb2cc;font-size:clamp(16px,2vw,19px);max-width:620px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:26px;margin:0 0 22px}
+  .panel h2{font-family:Georgia,serif;font-weight:500;color:var(--bright);font-size:23px;margin-bottom:14px}
+  .hint{color:#77879e;font-size:14.5px;margin-top:10px}
+  label{display:block;font-weight:600;color:var(--bright);margin-bottom:8px}
+
+  input[type=password]{width:100%;max-width:380px;background:var(--panel2);color:var(--bright);
+    border:1px solid var(--line);border-radius:10px;padding:13px 15px;font-size:18px}
+  .btn{display:inline-block;background:var(--panel2);color:var(--bright);border:1px solid #33506e;
+    border-radius:12px;padding:13px 22px;font-size:17px;font-weight:600;cursor:pointer;
+    min-height:48px;transition:border-color .2s,background .2s}
+  .btn:hover{border-color:var(--cyan-dim);background:#1c2a44}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.primary{background:#123a3a;border-color:var(--cyan-dim);color:var(--cyan)}
+  .btn.primary:hover{background:#164646;color:var(--bright)}
+  .btn-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+
+  .dropzone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    border:2px dashed #33506e;border-radius:14px;padding:44px 24px;cursor:pointer;text-align:center;
+    color:var(--bright);font-weight:600;font-size:19px;transition:border-color .2s,background .2s}
+  .dropzone small{color:#9fb2cc;font-weight:400;font-size:15px}
+  .dropzone:hover,.dropzone.drag{border-color:var(--cyan);background:#131e33}
+  .dropzone:focus-within{outline:3px solid var(--cyan);outline-offset:2px}
+  .visually-hidden-input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+
+  #status{font-size:18px;color:var(--bright);min-height:1.7em}
+  #statusDetail{color:#9fb2cc;font-size:15px;margin-top:4px}
+  progress{width:100%;height:14px;margin-top:14px;accent-color:var(--cyan);border-radius:7px}
+  .error{color:var(--rose);font-weight:600}
+  .error::before{content:"⚠ "}
+  .ok{color:var(--cyan)}
+
+  [role=tablist]{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  [role=tab]{background:none;border:1px solid var(--line);color:var(--ink);border-radius:10px;
+    padding:11px 18px;font-size:16px;font-weight:600;cursor:pointer;min-height:48px}
+  [role=tab][aria-selected=true]{background:var(--panel2);border-color:var(--cyan-dim);color:var(--cyan)}
+  textarea{width:100%;min-height:380px;background:var(--panel2);color:var(--bright);
+    border:1px solid var(--line);border-radius:12px;padding:18px;resize:vertical;
+    font-family:"Noto Sans Devanagari","Nirmala UI","Mangal","Kohinoor Devanagari",sans-serif;
+    font-size:19px;line-height:2}
+
+  footer{padding:40px 0 70px;color:#77879e;font-size:14.5px}
+  @media(max-width:600px){.wrap{padding:0 16px}.panel{padding:20px 16px}}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow"><a href="../">acku</a> · family tools</div>
+    <h1>श्रुतलेख</h1>
+    <p class="tagline">कैसेट की रिकॉर्डिंग से साफ़ हिंदी पाठ — ऑडियो फ़ाइल चुनें, बाक़ी यह पन्ना कर देगा।<br>
+    From cassette recording to clean Hindi text — pick the audio file, this page does the rest.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="panel" id="pwPanel">
+    <h2>पासवर्ड / Password</h2>
+    <form id="pwForm">
+      <label for="pwInput">परिवार का पासवर्ड डालें / Enter the family password</label>
+      <input type="password" id="pwInput" autocomplete="current-password" required>
+      <div class="btn-row">
+        <button class="btn primary" type="submit">सहेजें / Save</button>
+      </div>
+      <p class="hint" id="pwMsg"></p>
+    </form>
+  </section>
+
+  <section class="panel" id="uploadPanel">
+    <h2>ऑडियो / Audio</h2>
+    <label class="dropzone" id="dropzone">
+      <span>ऑडियो फ़ाइल चुनें / Choose an audio file</span>
+      <small>या फ़ाइल यहाँ खींच कर छोड़ें · or drag &amp; drop it here · MP3, WAV, M4A, AAC, OGG, FLAC</small>
+      <input class="visually-hidden-input" type="file" id="fileInput"
+             accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac,.wma">
+    </label>
+    <p class="hint">लंबी रिकॉर्डिंग (30–60 मिनट) कंप्यूटर पर Chrome या Firefox में सबसे अच्छा काम करती है।
+    Long recordings work best in Chrome or Firefox on a computer.</p>
+    <p class="hint" id="fileInfo"></p>
+  </section>
+
+  <section class="panel" id="progressPanel" hidden>
+    <h2>प्रगति / Progress</h2>
+    <div id="status" role="status" aria-live="polite"></div>
+    <p id="statusDetail" aria-hidden="true"></p>
+    <progress id="bar" max="1" value="0" aria-hidden="true"></progress>
+    <div class="btn-row">
+      <button class="btn" id="retryBtn" hidden>विफल भाग फिर से भेजें / Retry failed parts</button>
+    </div>
+  </section>
+
+  <section class="panel" id="outputPanel" hidden>
+    <h2>पाठ / Text</h2>
+    <div role="tablist" aria-label="Transcript versions">
+      <button role="tab" id="tabCorrected" aria-selected="true" aria-controls="paneCorrected">सुधारा हुआ / Corrected</button>
+      <button role="tab" id="tabRaw" aria-selected="false" aria-controls="paneRaw" tabindex="-1">मूल / Raw</button>
+    </div>
+    <div id="paneCorrected" role="tabpanel" aria-labelledby="tabCorrected">
+      <textarea id="txtCorrected" lang="hi" aria-label="सुधारा हुआ हिंदी पाठ / Corrected Hindi text"></textarea>
+    </div>
+    <div id="paneRaw" role="tabpanel" aria-labelledby="tabRaw" hidden>
+      <textarea id="txtRaw" lang="hi" aria-label="मूल ट्रांसक्रिप्ट / Raw transcript"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="copyBtn">कॉपी करें / Copy</button>
+      <button class="btn" id="downloadBtn">डाउनलोड .txt / Download</button>
+      <button class="btn" id="rereviewBtn">फिर से सुधारें / Re-run correction</button>
+    </div>
+    <p class="hint" id="outMsg" role="status" aria-live="polite"></p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Transcription by <a href="https://www.sarvam.ai">Sarvam AI</a> (saaras:v3 + sarvam-105b) ·
+    self-contained page, no trackers · <a href="../">← acku</a></p>
+  </div>
+</footer>
+
+<script>
+"use strict";
+
+/* ================= configuration ================= */
+// e.g. https://transcribe-proxy.<account>.workers.dev
+// (localStorage override lets us point a local/test page at another backend)
+const WORKER_URL = localStorage.getItem("shrutlekh_worker_override") || "PASTE_WORKER_URL_HERE";
+const SR = 16000;          // Sarvam works best at 16 kHz
+const CHUNK_S = 28;        // REST endpoint caps at ~30 s per request
+const MIN_CHUNK_S = 8;
+const SEARCH_S = 5;        // trailing window to hunt for silence near a cut
+const CONCURRENCY = 2;
+const RETRIES = 3;
+const MAX_FILE_MB = 600;
+const REVIEW_BATCH_CHARS = 3500;
+const PW_KEY = "shrutlekh_pw";
+
+/* ================= state ================= */
+const S = {
+  pw: localStorage.getItem(PW_KEY) || "",
+  busy: false,
+  abort: false,
+  fileName: "",
+  samples: null,
+  segs: [],      // [startSample, endSample] pairs
+  results: [],   // transcript per segment; null = failed; undefined = pending
+  done: 0,
+  raw: "",
+  corrected: "",
+};
+
+const $ = (id) => document.getElementById(id);
+const els = {
+  pwPanel: $("pwPanel"), pwForm: $("pwForm"), pwInput: $("pwInput"), pwMsg: $("pwMsg"),
+  dropzone: $("dropzone"), fileInput: $("fileInput"), fileInfo: $("fileInfo"),
+  progressPanel: $("progressPanel"), status: $("status"), statusDetail: $("statusDetail"),
+  bar: $("bar"), retryBtn: $("retryBtn"),
+  outputPanel: $("outputPanel"), tabCorrected: $("tabCorrected"), tabRaw: $("tabRaw"),
+  paneCorrected: $("paneCorrected"), paneRaw: $("paneRaw"),
+  txtCorrected: $("txtCorrected"), txtRaw: $("txtRaw"),
+  copyBtn: $("copyBtn"), downloadBtn: $("downloadBtn"), rereviewBtn: $("rereviewBtn"),
+  outMsg: $("outMsg"),
+};
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const yieldUI = () => new Promise((r) => setTimeout(r, 0));
+
+/* ================= status / progress ================= */
+let lastDecile = -1;
+function setStatus(msg, { error = false, detail = "" } = {}) {
+  els.status.textContent = msg;
+  els.status.className = error ? "error" : "";
+  els.statusDetail.textContent = detail;
+}
+function setBar(frac) { els.bar.value = Math.max(0, Math.min(1, frac)); }
+
+/* ================= password ================= */
+function showPwPanel(msg) {
+  els.pwPanel.hidden = false;
+  if (msg) { els.pwMsg.textContent = msg; els.pwMsg.className = "hint error"; }
+  els.pwInput.focus();
+}
+els.pwForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const pw = els.pwInput.value;
+  if (!pw) return;
+  els.pwMsg.textContent = "जाँच हो रही है… / Checking…";
+  els.pwMsg.className = "hint";
+  try {
+    const resp = await fetch(WORKER_URL + "/auth", { method: "POST", headers: { "X-App-Password": pw } });
+    if (resp.status === 401) {
+      els.pwMsg.textContent = "पासवर्ड ग़लत है — जिसने लिंक भेजा है उनसे पूछें / Wrong password — ask whoever shared this link.";
+      els.pwMsg.className = "hint error";
+      return;
+    }
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+  } catch {
+    els.pwMsg.textContent = "जाँच नहीं हो पाई (नेटवर्क?) — पासवर्ड सहेज लिया गया है / Couldn't verify (network?) — password saved anyway.";
+    els.pwMsg.className = "hint";
+    S.pw = pw; localStorage.setItem(PW_KEY, pw);
+    els.pwPanel.hidden = true;
+    return;
+  }
+  S.pw = pw; localStorage.setItem(PW_KEY, pw);
+  els.pwMsg.textContent = "";
+  els.pwPanel.hidden = true;
+  els.fileInput.focus();
+});
+
+/* ================= upload ================= */
+els.fileInput.addEventListener("change", () => {
+  if (els.fileInput.files[0]) run(els.fileInput.files[0]);
+});
+["dragover", "dragenter"].forEach((ev) =>
+  els.dropzone.addEventListener(ev, (e) => { e.preventDefault(); els.dropzone.classList.add("drag"); }));
+["dragleave", "drop"].forEach((ev) =>
+  els.dropzone.addEventListener(ev, (e) => { e.preventDefault(); els.dropzone.classList.remove("drag"); }));
+els.dropzone.addEventListener("drop", (e) => {
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) run(f);
+});
+
+/* ================= main flow ================= */
+async function run(file) {
+  if (S.busy) return;
+  if (WORKER_URL.indexOf("PASTE_") === 0) {
+    setupError("Setup incomplete: WORKER_URL is not configured in this page yet.");
+    return;
+  }
+  if (!S.pw) { showPwPanel("पहले पासवर्ड डालें / Enter the password first."); return; }
+  if (file.size > MAX_FILE_MB * 1024 * 1024) {
+    setupError(`फ़ाइल बहुत बड़ी है (${(file.size / 1048576).toFixed(0)} MB) — कृपया रिकॉर्डिंग को छोटे हिस्सों में बाँटें / File too large — please split the recording first.`);
+    return;
+  }
+
+  S.busy = true; S.abort = false; S.fileName = file.name;
+  S.samples = null; S.segs = []; S.results = []; S.done = 0; S.raw = ""; S.corrected = "";
+  lastDecile = -1;
+  els.progressPanel.hidden = false;
+  els.outputPanel.hidden = true;
+  els.retryBtn.hidden = true;
+  els.fileInfo.textContent = "";
+  setBar(0);
+
+  try {
+    setStatus("ऑडियो पढ़ी जा रही है… / Reading audio…");
+    S.samples = await loadAudio(file);
+    const mins = S.samples.length / SR / 60;
+    els.fileInfo.textContent = `${file.name} — ${mins.toFixed(1)} मिनट / minutes`;
+
+    setStatus("ऑडियो के भाग बनाए जा रहे हैं… / Splitting audio…");
+    await yieldUI();
+    S.segs = findBoundaries(S.samples);
+    S.results = new Array(S.segs.length);
+
+    await transcribeAll(S.segs.map((_, i) => i));
+    buildRaw();
+    showOutput();
+
+    await runReview();
+    finish();
+  } catch (e) {
+    handleFatal(e);
+  } finally {
+    S.busy = false;
+  }
+}
+
+async function runReview() {
+  if (!S.raw.trim()) return;
+  setStatus("भाषा-सुधार जारी… / Correcting the text…");
+  try {
+    S.corrected = await reviewAll(S.raw);
+    els.txtCorrected.value = S.corrected;
+    saveSession();
+  } catch (e) {
+    if (e && (e.fatal === "auth" || e.fatal === "credits")) throw e;
+    S.corrected = "";
+    selectTab("raw");
+    setStatus("सुधार नहीं हो पाया — मूल पाठ नीचे है। बाद में “फिर से सुधारें” दबाएँ। / Correction failed — the raw text is below; try “Re-run correction” later.", { error: true });
+  }
+}
+
+function finish() {
+  setBar(1);
+  const failed = S.results.filter((r) => r === null).length;
+  if (failed > 0) {
+    els.retryBtn.hidden = false;
+    setStatus(`पूरा हुआ, लेकिन ${failed} भाग विफल रहे — नीचे “फिर से भेजें” दबाएँ / Done, but ${failed} part(s) failed — use the retry button.`, { error: true });
+  } else {
+    setStatus("हो गया! सुधारा हुआ पाठ नीचे तैयार है। / Done! The corrected text is ready below.");
+  }
+  showOutput();
+  (S.corrected ? els.txtCorrected : els.txtRaw).focus();
+}
+
+function setupError(msg) {
+  els.progressPanel.hidden = false;
+  setStatus(msg, { error: true });
+}
+
+function handleFatal(e) {
+  if (e && e.fatal === "auth") {
+    localStorage.removeItem(PW_KEY); S.pw = "";
+    setStatus("पासवर्ड ग़लत है — रुक गया / Wrong password — stopped.", { error: true });
+    showPwPanel("पासवर्ड ग़लत है / Wrong password.");
+    return;
+  }
+  if (e && e.fatal === "credits") {
+    setStatus("Sarvam के क्रेडिट खत्म हो गए हैं — dashboard.sarvam.ai पर recharge करके दोबारा चलाएँ / Sarvam credits exhausted — recharge at dashboard.sarvam.ai and run again.", { error: true });
+    if (S.results.some((r) => typeof r === "string")) { buildRaw(); showOutput(); }
+    return;
+  }
+  setStatus((e && (e.msg || e.message)) || "कुछ गड़बड़ हुई / Something went wrong.", { error: true });
+}
+
+/* ================= audio decoding ================= */
+async function loadAudio(file) {
+  const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const tag = (o) => String.fromCharCode(head[o], head[o + 1], head[o + 2], head[o + 3]);
+  if (head.length >= 12 && tag(0) === "RIFF" && tag(8) === "WAVE") return decodeWavDirect(file);
+  return decodeViaWebAudio(file);
+}
+
+/*
+ * WAV fast path: stream the data chunk in blocks so a 60-minute tape never
+ * needs the full decoded source in memory — only the 16 kHz mono output.
+ */
+async function decodeWavDirect(file) {
+  const readAt = async (pos, len) => new DataView(await file.slice(pos, pos + len).arrayBuffer());
+  let pos = 12, fmt = null, dataStart = -1, dataLen = 0;
+  while (pos + 8 <= file.size && !(fmt && dataStart >= 0)) {
+    const h = await readAt(pos, 8);
+    const id = String.fromCharCode(h.getUint8(0), h.getUint8(1), h.getUint8(2), h.getUint8(3));
+    const size = h.getUint32(4, true);
+    if (id === "fmt ") {
+      const d = await readAt(pos + 8, Math.min(size, 40));
+      fmt = {
+        format: d.getUint16(0, true),
+        channels: d.getUint16(2, true),
+        rate: d.getUint32(4, true),
+        bits: d.getUint16(14, true),
+      };
+      // WAVE_FORMAT_EXTENSIBLE: real format is the first word of the SubFormat GUID
+      if (fmt.format === 0xFFFE && size >= 40) fmt.format = d.getUint16(24, true);
+    } else if (id === "data") {
+      dataStart = pos + 8;
+      dataLen = (size === 0 || size === 0xFFFFFFFF) ? file.size - dataStart
+                                                    : Math.min(size, file.size - dataStart);
+    }
+    pos += 8 + size + (size & 1); // chunks are word-aligned
+  }
+  if (!fmt || dataStart < 0) throw { msg: "WAV फ़ाइल पढ़ी नहीं जा सकी / Couldn't parse this WAV file." };
+  const { format, channels, rate, bits } = fmt;
+  const isFloat = format === 3, isPCM = format === 1;
+  if ((!isPCM && !isFloat) || channels < 1 || channels > 8 || rate < 8000 ||
+      (isPCM && ![8, 16, 24, 32].includes(bits)) || (isFloat && bits !== 32)) {
+    throw { msg: "इस WAV format का साथ नहीं है — 16-bit WAV में export करें / Unsupported WAV format — export as 16-bit WAV." };
+  }
+
+  const bytesPerSample = bits >> 3;
+  const frameBytes = bytesPerSample * channels;
+  const nFrames = Math.floor(dataLen / frameBytes);
+  if (nFrames < SR) throw { msg: "रिकॉर्डिंग बहुत छोटी है / Recording is too short." };
+  const ratio = rate / SR;
+  const outLen = Math.floor((nFrames - 1) / ratio) + 1;
+  const out = new Float32Array(outLen);
+
+  const BLOCK_FRAMES = Math.max(1, Math.floor(8 * 1024 * 1024 / frameBytes));
+  let blockStart = 0, carry = 0, outIdx = 0;
+
+  while (blockStart < nFrames) {
+    const framesThis = Math.min(BLOCK_FRAMES, nFrames - blockStart);
+    const byteOff = dataStart + blockStart * frameBytes;
+    const dv = new DataView(await file.slice(byteOff, byteOff + framesThis * frameBytes).arrayBuffer());
+    const mono = new Float32Array(framesThis);
+    for (let f = 0; f < framesThis; f++) {
+      let sum = 0;
+      for (let c = 0; c < channels; c++) {
+        const o = f * frameBytes + c * bytesPerSample;
+        let v;
+        if (isFloat) v = dv.getFloat32(o, true);
+        else if (bits === 16) v = dv.getInt16(o, true) / 32768;
+        else if (bits === 24) v = (dv.getUint8(o) | (dv.getUint8(o + 1) << 8) | (dv.getInt8(o + 2) << 16)) / 8388608;
+        else if (bits === 32) v = dv.getInt32(o, true) / 2147483648;
+        else v = (dv.getUint8(o) - 128) / 128;
+        sum += v;
+      }
+      mono[f] = sum / channels;
+    }
+    // linear-interp resample; fractional cursor carries across block boundaries
+    const lastFrame = blockStart + framesThis - 1;
+    const moreBlocks = blockStart + framesThis < nFrames;
+    while (outIdx < outLen) {
+      const t = outIdx * ratio;
+      const i0 = Math.floor(t);
+      if (i0 >= lastFrame && moreBlocks) break; // need i0+1 from the next block
+      const frac = t - i0;
+      const s0 = i0 < blockStart ? carry : mono[i0 - blockStart];
+      const s1 = (i0 + 1 - blockStart) < framesThis ? mono[i0 + 1 - blockStart] : s0;
+      out[outIdx++] = s0 + (s1 - s0) * frac;
+    }
+    carry = mono[framesThis - 1];
+    blockStart += framesThis;
+    setStatus(`ऑडियो पढ़ी जा रही है… / Reading audio… ${Math.round(blockStart / nFrames * 100)}%`);
+    setBar(blockStart / nFrames * 0.1); // decoding is the first 10% of the bar
+    await yieldUI();
+  }
+  return out;
+}
+
+/* mp3/m4a/etc: browser decoder. Transiently memory-heavy for very long files. */
+async function decodeViaWebAudio(file) {
+  const buf = await file.arrayBuffer();
+  const ctx = new OfflineAudioContext(1, 1, SR);
+  let audio;
+  try {
+    audio = await new Promise((res, rej) => {
+      const p = ctx.decodeAudioData(buf, res, rej); // callback form works everywhere
+      if (p && typeof p.then === "function") p.then(res, rej);
+    });
+  } catch {
+    throw { msg: "यह फ़ाइल decode नहीं हो पाई — इसे WAV में बदल कर आज़माएँ / Couldn't decode this file — try converting it to WAV." };
+  }
+  if (audio.sampleRate !== SR || audio.numberOfChannels !== 1) {
+    // Safari decodes at the file's own rate; resample + downmix offline
+    setStatus("ऑडियो 16 kHz में बदली जा रही है… / Resampling audio…");
+    const off = new OfflineAudioContext(1, Math.ceil(audio.duration * SR), SR);
+    const src = off.createBufferSource();
+    src.buffer = audio; src.connect(off.destination); src.start();
+    audio = await off.startRendering();
+  }
+  const mono = audio.getChannelData(0).slice(); // copy out so the AudioBuffer can be GC'd
+  return mono;
+}
+
+/* ================= chunking ================= */
+function findBoundaries(samples) {
+  const FRAME = 400; // 25 ms @ 16 kHz
+  const nF = Math.floor(samples.length / FRAME);
+  const energy = new Float32Array(nF);
+  for (let f = 0; f < nF; f++) {
+    let e = 0; const base = f * FRAME;
+    for (let j = 0; j < FRAME; j++) { const s = samples[base + j]; e += s * s; }
+    energy[f] = e;
+  }
+  const segs = [];
+  let pos = 0;
+  while (samples.length - pos > CHUNK_S * SR) {
+    const target = pos + CHUNK_S * SR;
+    const lo = Math.max(pos + MIN_CHUNK_S * SR, target - SEARCH_S * SR);
+    const f0 = Math.min(nF - 1, Math.ceil(lo / FRAME));
+    const f1 = Math.min(nF - 1, Math.floor(target / FRAME));
+    let cut = target;
+    if (f1 > f0) {
+      // prefer the earliest genuinely-quiet frame; else the quietest frame
+      const win = Array.from(energy.slice(f0, f1 + 1)).sort((a, b) => a - b);
+      const thresh = 0.25 * win[Math.floor(win.length / 2)];
+      let pick = -1;
+      for (let f = f0; f <= f1; f++) if (energy[f] < thresh) { pick = f; break; }
+      if (pick < 0) {
+        pick = f0;
+        for (let f = f0; f <= f1; f++) if (energy[f] < energy[pick]) pick = f;
+      }
+      cut = pick * FRAME + (FRAME >> 1);
+    }
+    segs.push([pos, cut]);
+    pos = cut;
+  }
+  if (segs.length === 0 || samples.length - pos >= 2 * SR) segs.push([pos, samples.length]);
+  else segs[segs.length - 1][1] = samples.length; // merge a tiny tail into the last chunk
+  return segs;
+}
+
+function encodeWav16(samples, start, end) {
+  const n = end - start;
+  const header = new ArrayBuffer(44);
+  const v = new DataView(header);
+  const wstr = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  wstr(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); wstr(8, "WAVE");
+  wstr(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, SR, true); v.setUint32(28, SR * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  wstr(36, "data"); v.setUint32(40, n * 2, true);
+  const pcm = new Int16Array(n);
+  for (let i = 0; i < n; i++) {
+    let s = samples[start + i];
+    s = s < -1 ? -1 : s > 1 ? 1 : s;
+    pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+  }
+  return new Blob([header, pcm.buffer], { type: "audio/wav" });
+}
+
+/* ================= API calls with retry ================= */
+async function apiFetch(path, opts) {
+  const delays = [1500, 4000, 10000];
+  for (let attempt = 0; ; attempt++) {
+    if (S.abort) throw { fatal: "aborted" };
+    let resp;
+    try {
+      resp = await fetch(WORKER_URL + path, {
+        ...opts,
+        headers: { ...(opts.headers || {}), "X-App-Password": S.pw },
+      });
+    } catch {
+      if (attempt < RETRIES) { await sleep(delays[Math.min(attempt, 2)] + Math.random() * 1000); continue; }
+      throw { fatal: "network", msg: "नेटवर्क की समस्या — इंटरनेट देख कर दोबारा चलाएँ / Network problem — check the connection and run again." };
+    }
+    if (resp.ok) return resp.json();
+    if (resp.status === 401) throw { fatal: "auth" };
+    if (resp.status === 402) throw { fatal: "credits" };
+    if (resp.status === 400 || resp.status === 413) {
+      let d = ""; try { d = JSON.stringify(await resp.json()); } catch {}
+      throw { fatal: "rejected", msg: "अनुरोध अस्वीकार हुआ / Request rejected: " + d };
+    }
+    if (attempt < RETRIES) { await sleep(delays[Math.min(attempt, 2)] + Math.random() * 1000); continue; }
+    throw { fatal: "exhausted", msg: "सर्वर बार-बार विफल (HTTP " + resp.status + ") / Server kept failing." };
+  }
+}
+
+/* ================= transcription ================= */
+async function transcribeAll(indices) {
+  const total = S.segs.length;
+  const times = [];
+  let next = 0;
+  const loop = async () => {
+    for (;;) {
+      if (S.abort) return;
+      const qi = next++;
+      if (qi >= indices.length) return;
+      const i = indices[qi];
+      const [a, b] = S.segs[i];
+      const t0 = performance.now();
+      try {
+        const r = await apiFetch("/transcribe", {
+          method: "POST",
+          headers: { "Content-Type": "audio/wav" },
+          body: encodeWav16(S.samples, a, b),
+        });
+        S.results[i] = (r.transcript || "").trim();
+      } catch (e) {
+        if (e && (e.fatal === "auth" || e.fatal === "credits" || e.fatal === "aborted")) {
+          S.abort = true; throw e;
+        }
+        S.results[i] = null; // this chunk failed; keep going
+      }
+      times.push(performance.now() - t0);
+      S.done++;
+      progressTick(times, total);
+      saveSession();
+    }
+  };
+  const workers = Array.from({ length: Math.min(CONCURRENCY, indices.length) }, () => loop());
+  const settled = await Promise.allSettled(workers);
+  const fatal = settled.find((s) => s.status === "rejected");
+  if (fatal) throw fatal.reason;
+}
+
+function progressTick(times, total) {
+  setBar(0.1 + 0.75 * (S.done / total)); // transcription occupies 10%→85% of the bar
+  const avg = times.reduce((a, b) => a + b, 0) / times.length;
+  const etaMin = Math.ceil((total - S.done) * avg / CONCURRENCY / 60000);
+  els.statusDetail.textContent = `भाग ${S.done} / ${total} · लगभग ${etaMin} मिनट बाकी / ~${etaMin} min left`;
+  // announce to screen readers at ~10% milestones only, to avoid chatter
+  const decile = Math.floor(S.done / total * 10);
+  if (decile > lastDecile) {
+    lastDecile = decile;
+    setStatus(`लिपिबद्ध हो रहा है… ${decile * 10}% — लगभग ${etaMin} मिनट बाकी / Transcribing… ${decile * 10}%, about ${etaMin} min left`,
+      { detail: els.statusDetail.textContent });
+  }
+}
+
+function buildRaw() {
+  S.raw = S.results
+    .map((r, i) => (r === null ? `[भाग ${i + 1} विफल / part ${i + 1} failed]` : (r || "")))
+    .filter((s) => s !== "")
+    .join("\n");
+  els.txtRaw.value = S.raw;
+  saveSession();
+}
+
+els.retryBtn.addEventListener("click", async () => {
+  if (S.busy) return;
+  const failedIdx = S.results.map((r, i) => (r === null ? i : -1)).filter((i) => i >= 0);
+  if (!failedIdx.length || !S.samples) return;
+  S.busy = true; S.abort = false;
+  els.retryBtn.hidden = true;
+  lastDecile = -1; S.done = S.results.filter((r) => typeof r === "string").length;
+  try {
+    setStatus("विफल भाग फिर से भेजे जा रहे हैं… / Retrying failed parts…");
+    await transcribeAll(failedIdx);
+    buildRaw();
+    await runReview();
+    finish();
+  } catch (e) {
+    handleFatal(e);
+  } finally {
+    S.busy = false;
+  }
+});
+
+/* ================= LLM review ================= */
+async function reviewAll(rawText) {
+  const lines = rawText.split("\n");
+  const parts = []; // {batch} = send to LLM, {literal} = pass through untouched
+  let cur = [];
+  const flush = () => { if (cur.length) { parts.push({ batch: cur.join("\n") }); cur = []; } };
+  for (const line of lines) {
+    if (/^\[भाग \d+ .*\]$/.test(line.trim())) { flush(); parts.push({ literal: line }); continue; }
+    if (cur.join("\n").length + line.length + 1 > REVIEW_BATCH_CHARS) flush();
+    cur.push(line);
+  }
+  flush();
+  const nBatches = parts.filter((p) => p.batch !== undefined).length;
+  const out = [];
+  let done = 0;
+  for (const p of parts) {
+    if (p.literal !== undefined) { out.push(p.literal); continue; }
+    done++;
+    setStatus(`भाषा-सुधार जारी… (${done}/${nBatches}) / Correcting… (${done}/${nBatches})`);
+    setBar(0.85 + 0.15 * (done / nBatches));
+    const r = await apiFetch("/review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: p.batch }),
+    });
+    out.push((r.corrected || "").trim());
+  }
+  return out.join("\n\n");
+}
+
+els.rereviewBtn.addEventListener("click", async () => {
+  if (S.busy || !S.raw.trim()) return;
+  S.busy = true; S.abort = false;
+  els.progressPanel.hidden = false;
+  try {
+    await runReview();
+    if (S.corrected) { setStatus("सुधार पूरा हुआ / Correction finished."); selectTab("corrected"); els.txtCorrected.focus(); }
+  } catch (e) {
+    handleFatal(e);
+  } finally {
+    S.busy = false;
+  }
+});
+
+/* ================= output: tabs / copy / download ================= */
+function showOutput() {
+  els.txtRaw.value = S.raw;
+  els.txtCorrected.value = S.corrected;
+  els.outputPanel.hidden = false;
+  selectTab(S.corrected ? "corrected" : "raw");
+}
+function selectTab(which) {
+  const corr = which === "corrected";
+  els.tabCorrected.setAttribute("aria-selected", corr);
+  els.tabRaw.setAttribute("aria-selected", !corr);
+  els.tabCorrected.tabIndex = corr ? 0 : -1;
+  els.tabRaw.tabIndex = corr ? -1 : 0;
+  els.paneCorrected.hidden = !corr;
+  els.paneRaw.hidden = corr;
+}
+els.tabCorrected.addEventListener("click", () => selectTab("corrected"));
+els.tabRaw.addEventListener("click", () => selectTab("raw"));
+[els.tabCorrected, els.tabRaw].forEach((tab) =>
+  tab.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      const other = tab === els.tabCorrected ? els.tabRaw : els.tabCorrected;
+      selectTab(other === els.tabCorrected ? "corrected" : "raw");
+      other.focus();
+    }
+  }));
+
+function activeText() {
+  return els.paneCorrected.hidden ? els.txtRaw.value : els.txtCorrected.value;
+}
+els.copyBtn.addEventListener("click", async () => {
+  const text = activeText();
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = els.paneCorrected.hidden ? els.txtRaw : els.txtCorrected;
+    ta.focus(); ta.select();
+    document.execCommand("copy");
+  }
+  els.outMsg.textContent = "कॉपी हो गया ✓ / Copied ✓";
+  setTimeout(() => { els.outMsg.textContent = ""; }, 4000);
+});
+els.downloadBtn.addEventListener("click", () => {
+  const text = activeText();
+  const base = (S.fileName || "transcript").replace(/\.[^.]+$/, "");
+  const kind = els.paneCorrected.hidden ? "mool" : "shuddh";
+  // BOM so Windows Notepad renders Devanagari correctly
+  const blob = new Blob(["\uFEFF" + text], { type: "text/plain;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${base}-${kind}.txt`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  els.outMsg.textContent = "डाउनलोड शुरू ✓ / Download started ✓";
+  setTimeout(() => { els.outMsg.textContent = ""; }, 4000);
+});
+
+/* ================= session restore / unload guard ================= */
+function saveSession() {
+  try {
+    sessionStorage.setItem("shrutlekh_run", JSON.stringify({
+      name: S.fileName,
+      raw: S.results ? S.results.map((r, i) => (r === null ? `[भाग ${i + 1} विफल / part ${i + 1} failed]` : (r || ""))).filter(Boolean).join("\n") : S.raw,
+      corrected: S.corrected,
+    }));
+  } catch {}
+}
+(function restoreSession() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem("shrutlekh_run") || "null");
+    if (saved && saved.raw) {
+      S.raw = saved.raw; S.corrected = saved.corrected || ""; S.fileName = saved.name || "";
+      showOutput();
+      els.outMsg.textContent = "पिछली बार का पाठ वापस लाया गया / Restored text from the previous run.";
+    }
+  } catch {}
+})();
+addEventListener("beforeunload", (e) => {
+  if (S.busy) { e.preventDefault(); e.returnValue = ""; }
+});
+
+/* ================= init ================= */
+if (S.pw) els.pwPanel.hidden = true;
+</script>
+</body>
+</html>
