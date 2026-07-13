@@ -3,14 +3,18 @@ main = "src/index.js"
 compatibility_date = "2026-07-01"
 workers_dev = true
 
-# Per-IP rate limit: caps password brute-forcing and runaway clients.
-# If `wrangler deploy` complains about this binding on your plan, delete
-# this block and redeploy — the code checks `if (env.RL)` and works without it.
-[[unsafe.bindings]]
+# Per-IP rate limit: caps runaway clients (30 req/min).
+[[ratelimits]]
 name = "RL"
-type = "ratelimit"
 namespace_id = "1001"
 simple = { limit = 30, period = 60 }
+
+# Separate, stricter bucket consumed only by FAILED password attempts:
+# caps brute-force guessing at 5 tries/min per IP.
+[[ratelimits]]
+name = "RL_FAIL"
+namespace_id = "1002"
+simple = { limit = 5, period = 60 }
 
 # Secrets (never put values in this file):
 #   npx wrangler secret put SARVAM_API_KEY

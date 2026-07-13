@@ -21,8 +21,10 @@ npx wrangler secret put SARVAM_API_KEY   # paste the Sarvam key
 npx wrangler secret put APP_PASSWORD     # choose the family password
 ```
 
-If `deploy` complains about the `[[unsafe.bindings]]` rate-limit block in
-`wrangler.toml`, delete that block and redeploy — the code works without it.
+Rate limits: failed password guesses are capped at 5/min per IP (plus a
+0.5 s delay per failure); authenticated traffic at 30/min per IP. If
+`deploy` ever complains about the `[[ratelimits]]` blocks, delete them and
+redeploy — the code works without them.
 
 ## 3. Wire up the page
 

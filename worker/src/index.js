@@ -53,6 +53,15 @@ export default {
     const cors = (resp) => withCors(resp, allowedOrigin);
 
     if (!(await passwordOk(req, env))) {
+      // Failed guesses consume their own strict bucket (5/min/IP) so a
+      // brute-force attempt stalls almost immediately; the delay makes even
+      // those five guesses slow. Successful logins never touch this bucket.
+      const ip = req.headers.get("CF-Connecting-IP") || "unknown";
+      if (env.RL_FAIL) {
+        const { success } = await env.RL_FAIL.limit({ key: ip });
+        if (!success) return cors(json({ error: "too_many_attempts" }, 429));
+      }
+      await new Promise((r) => setTimeout(r, 500));
       return cors(json({ error: "unauthorized" }, 401));
     }
 
