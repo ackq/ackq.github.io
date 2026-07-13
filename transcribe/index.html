@@ -159,7 +159,7 @@
 /* ================= configuration ================= */
 // e.g. https://transcribe-proxy.<account>.workers.dev
 // (localStorage override lets us point a local/test page at another backend)
-const WORKER_URL = localStorage.getItem("shrutlekh_worker_override") || "PASTE_WORKER_URL_HERE";
+const WORKER_URL = localStorage.getItem("shrutlekh_worker_override") || "https://transcribe-proxy.acku-chauhan.workers.dev";
 const SR = 16000;          // Sarvam works best at 16 kHz
 const CHUNK_S = 28;        // REST endpoint caps at ~30 s per request
 const MIN_CHUNK_S = 8;
